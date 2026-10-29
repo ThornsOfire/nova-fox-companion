@@ -10,6 +10,9 @@ function subscribe(channel, callback) {
 
 contextBridge.exposeInMainWorld('codexAvatars', {
   getBootstrap: () => ipcRenderer.invoke('avatars:get-overlay-bootstrap'),
+  onReaction: (callback) => subscribe('avatars:reaction', callback),
+  companionMoved: (sessionId, agentId) => ipcRenderer.invoke('avatars:companion-moved', sessionId, agentId),
+  setVoiceMuted: (muted) => ipcRenderer.invoke('avatars:set-voice-muted', Boolean(muted)),
   setOverlayHitTest: (value) => ipcRenderer.invoke('avatars:overlay-hit-test', Boolean(value)),
   onState: (callback) => subscribe('avatars:state', callback),
   onSettings: (callback) => subscribe('avatars:settings', callback),

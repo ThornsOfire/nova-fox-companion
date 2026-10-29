@@ -1,4 +1,8 @@
-# Codex Avatars
+# Nova Companion
+
+An evolving fork of Codex Avatars with original companion remarks, optional speech, GPT model selection, and encrypted companion memory. See [Nova Companion development notes](docs/nova-companion.md) for implemented behavior, voice controls, and planned work. Upstream documentation follows. Integration identifiers remain compatible with upstream; do not install both companions against the same hooks.
+
+## Upstream: Codex Avatars
 
 Codex Avatars gives the main task and every Codex subagent an independent animated companion. Characters use the native Codex Pet v2 format and roam directly across one or more displays, with no dock, colored panel, or visible overlay background.
 

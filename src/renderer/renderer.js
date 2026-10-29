@@ -114,7 +114,7 @@ const translations = {
     promptCopied: 'Avatar prompt copied.', appearanceRequired: 'Describe what the avatar should look like first.',
     imported: (name) => `${name} was imported and added to your local gallery.`, exported: 'Portable Pet package created.',
     importError: 'This Pet package could not be imported.', exportError: 'This Pet could not be shared.', saveError: 'Could not save this setting.', zoneCancelled: 'Area selection cancelled.',
-    onboardingWelcomeTitle: 'Welcome to Codex Avatars', onboardingWelcomeCopy: 'Each Codex agent gets an independent animated companion on your desktop.',
+    onboardingWelcomeTitle: 'Welcome to Nova Companion', onboardingWelcomeCopy: 'Each Codex agent gets an independent animated companion on your desktop.',
     onboardingWelcomeFeature: 'The overlay itself is invisible and click-through by default. The tray icon and Ctrl + Alt + A always give you control.',
     onboardingPluginTitle: 'Enable the plugin', onboardingPluginCopy: 'The companion can run alone, but the plugin makes the experience complete.',
     onboardingPluginFeature: 'Its creation skill invokes hatch-pet, validates the full Pet v2 atlas, and installs it locally. Its hooks connect agent lifecycle events to avatar states.',
@@ -239,7 +239,7 @@ const translations = {
     promptCopied: 'Prompt de l’avatar copié.', appearanceRequired: 'Décrivez d’abord l’apparence de l’avatar.',
     imported: (name) => `${name} a été importé et ajouté à votre galerie locale.`, exported: 'Package Pet portable créé.',
     importError: 'Impossible d’importer ce package Pet.', exportError: 'Impossible de partager ce Pet.', saveError: 'Impossible d’enregistrer ce réglage.', zoneCancelled: 'Sélection de zone annulée.',
-    onboardingWelcomeTitle: 'Bienvenue dans Codex Avatars', onboardingWelcomeCopy: 'Chaque agent Codex obtient un compagnon animé indépendant sur votre bureau.',
+    onboardingWelcomeTitle: 'Bienvenue dans Nova Companion', onboardingWelcomeCopy: 'Chaque agent Codex obtient un compagnon animé indépendant sur votre bureau.',
     onboardingWelcomeFeature: 'L’overlay lui-même est invisible et laisse passer les clics par défaut. L’icône de zone de notification et Ctrl + Alt + A vous rendent toujours la main.',
     onboardingPluginTitle: 'Activer le plugin', onboardingPluginCopy: 'Le compagnon peut fonctionner seul, mais le plugin complète l’expérience.',
     onboardingPluginFeature: 'Sa compétence de création appelle hatch-pet, valide l’atlas Pet v2 complet et l’installe localement. Ses hooks relient le cycle de vie des agents aux états des avatars.',
@@ -949,6 +949,10 @@ function renderSettings() {
   elements.subagentAvatarSize.value = settings.subagentAvatarSize;
   elements.subagentAvatarSizeValue.textContent = `${settings.subagentAvatarSize}px`;
   elements.labels.checked = settings.showLabels;
+  document.querySelector('#companion-remarks-toggle').checked = settings.companionRemarks;
+  document.querySelector('#companion-voice-toggle').checked = settings.companionVoiceMuted;
+  document.querySelector('#companion-remarks-title').textContent = settings.language === 'fr' ? 'Afficher les remarques du compagnon' : 'Show companion remarks';
+  document.querySelector('#companion-voice-title').textContent = settings.language === 'fr' ? 'Couper la voix du compagnon' : 'Mute companion voice';
   elements.agentDetails.checked = settings.showAgentDetails;
   elements.dormantAgents.checked = settings.showDormantAgents;
   elements.autoEnable.checked = settings.autoEnableNewAvatars;
@@ -1054,6 +1058,8 @@ elements.mainAvatarSize.addEventListener('change', persistAvatarSizes);
 elements.subagentAvatarSize.addEventListener('input', previewAvatarSizes);
 elements.subagentAvatarSize.addEventListener('change', persistAvatarSizes);
 elements.labels.addEventListener('change', () => void save({ showLabels: elements.labels.checked }));
+document.querySelector('#companion-remarks-toggle').addEventListener('change', (event) => void save({ companionRemarks: event.target.checked }));
+document.querySelector('#companion-voice-toggle').addEventListener('change', (event) => void save({ companionVoiceMuted: event.target.checked }));
 elements.agentDetails.addEventListener('change', () => void save({ showAgentDetails: elements.agentDetails.checked }));
 elements.dormantAgents.addEventListener('change', () => void save({ showDormantAgents: elements.dormantAgents.checked }));
 elements.autoEnable.addEventListener('change', () => void save({ autoEnableNewAvatars: elements.autoEnable.checked }));

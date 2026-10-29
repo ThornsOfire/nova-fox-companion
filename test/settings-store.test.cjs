@@ -32,6 +32,22 @@ test('defaults to English and accepts only the supported French alternative', ()
   assert.equal(normalizeSettings({ language: 'fr' }).language, 'fr');
 });
 
+test('persists companion quiet and mute preferences independently', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'null-voice-'));
+  try {
+    const file = path.join(directory, 'settings.json');
+    const store = new SettingsStore(file);
+    await store.load();
+    await store.update({ companionRemarks: false, companionVoiceMuted: true });
+    const reloaded = new SettingsStore(file);
+    const settings = await reloaded.load();
+    assert.equal(settings.companionRemarks, false);
+    assert.equal(settings.companionVoiceMuted, true);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('defaults to matching the main agent and permits random Pet distribution', () => {
   assert.equal(normalizeSettings({ avatarAssignmentMode: 'anything' }).avatarAssignmentMode, 'master');
   assert.equal(normalizeSettings({ avatarAssignmentMode: 'random' }).avatarAssignmentMode, 'random');

@@ -18,6 +18,14 @@ const DEFAULT_SETTINGS = Object.freeze({
   mainAvatarSize: 118,
   subagentAvatarSize: 118,
   showLabels: true,
+  companionRemarks: true,
+  companionVoiceMuted: false,
+  companionCloudEnabled: false,
+  companionModel: 'gpt-6-luna',
+  companionPersonality: 'playful',
+  companionCooldownSeconds: 45,
+  companionDailyRequests: 100,
+  companionDailyBudgetUsd: 0.1,
   showAgentDetails: true,
   showDormantAgents: false,
   reducedMotion: false,
@@ -85,6 +93,19 @@ function normalizeSettings(value) {
     mainAvatarSize: clampInteger(source.mainAvatarSize, 72, 180, legacyAvatarSize),
     subagentAvatarSize: clampInteger(source.subagentAvatarSize, 72, 180, legacyAvatarSize),
     showLabels: source.showLabels === undefined ? DEFAULT_SETTINGS.showLabels : Boolean(source.showLabels),
+    companionRemarks: source.companionRemarks === undefined
+      ? DEFAULT_SETTINGS.companionRemarks : Boolean(source.companionRemarks),
+    companionVoiceMuted: source.companionVoiceMuted === undefined
+      ? DEFAULT_SETTINGS.companionVoiceMuted : Boolean(source.companionVoiceMuted),
+    companionCloudEnabled: Boolean(source.companionCloudEnabled),
+    companionModel: ['gpt-6-luna', 'gpt-6.1-terra', 'gpt-6.1-sol'].includes(source.companionModel)
+      ? source.companionModel : 'gpt-6-luna',
+    companionPersonality: ['dry', 'playful', 'encouraging', 'gremlin'].includes(source.companionPersonality)
+      ? source.companionPersonality : DEFAULT_SETTINGS.companionPersonality,
+    companionCooldownSeconds: clampInteger(source.companionCooldownSeconds, 20, 600, 45),
+    companionDailyRequests: clampInteger(source.companionDailyRequests, 1, 500, 100),
+    companionDailyBudgetUsd: Number.isFinite(Number(source.companionDailyBudgetUsd))
+      ? Math.min(10, Math.max(0.001, Number(source.companionDailyBudgetUsd))) : 0.1,
     showAgentDetails: source.showAgentDetails === undefined
       ? DEFAULT_SETTINGS.showAgentDetails
       : Boolean(source.showAgentDetails),

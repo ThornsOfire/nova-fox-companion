@@ -6,6 +6,11 @@ const topology = window.CodexAvatarTopology;
 const labelLayout = window.CodexAvatarLabelLayout.labelLayout;
 const assignAvatars = window.CodexAvatarAssignment.assignAvatars;
 const actors = new Map();
+const reactions = new window.NovaCompanion.CompanionReactions();
+const voice = new window.NovaCompanionVoice.CompanionVoice({
+  synthesis: window.speechSynthesis,
+  createUtterance: (text) => new SpeechSynthesisUtterance(text),
+});
 const animations = {
   idle: { row: 0, durations: [280, 110, 110, 140, 140, 320] },
   right: { row: 1, durations: [120, 120, 120, 120, 120, 120, 120, 220] },
@@ -204,7 +209,8 @@ function flattenAgents() {
   })));
   return settings?.showDormantAgents
     ? agents
-    : agents.filter((agent) => !['idle', 'dormant'].includes(agent.status));
+    : agents.filter((agent) => !['idle', 'dormant'].includes(agent.status)
+      || (settings?.companionRemarks && reactions.get(agent.sessionId, agent.id)));
 }
 
 function createActor(agent, avatar, index) {
@@ -222,7 +228,19 @@ function createActor(agent, avatar, index) {
   const labelDetail = document.createElement('small');
   labelDetail.className = 'agent-detail';
   label.append(labelName, labelDetail);
-  element.append(sprite, label);
+  const bubble = document.createElement('span');
+  bubble.className = 'companion-bubble';
+  bubble.setAttribute('role', 'status');
+  bubble.hidden = true;
+  const mute = document.createElement('button');
+  mute.className = 'companion-mute';
+  mute.addEventListener('pointerdown', (event) => event.stopPropagation());
+  mute.addEventListener('click', () => {
+    const muted = !settings.companionVoiceMuted;
+    voice.setMuted(muted || !settings.companionRemarks);
+    void api.setVoiceMuted(muted).catch((error) => console.error(error));
+  });
+  element.append(sprite, label, bubble, mute);
   world.append(element);
 
   const actor = {
@@ -234,6 +252,8 @@ function createActor(agent, avatar, index) {
     label,
     labelName,
     labelDetail,
+    bubble,
+    mute,
     x: 0,
     y: 0,
     targetX: 0,
@@ -268,6 +288,10 @@ function updateActorElement(actor) {
   element.setAttribute('aria-label', [labelName.textContent, detail, agent.status].filter(Boolean).join(', '));
   sprite.style.backgroundImage = `url("${avatar.assetUrl}")`;
   sprite.style.backgroundSize = `800% ${avatar.rows * 100}%`;
+  const muted = Boolean(settings?.companionVoiceMuted);
+  actor.mute.textContent = muted ? 'Unmute' : 'Mute';
+  actor.mute.setAttribute('aria-label', muted ? 'Unmute companion voice' : 'Mute companion voice');
+  actor.mute.setAttribute('aria-pressed', String(muted));
 }
 
 function reconcileActors() {
@@ -296,6 +320,21 @@ function reconcileActors() {
   });
 }
 
+function updateSpeech(actor) {
+  const message = settings?.companionRemarks && reactions.get(actor.agent.sessionId, actor.agent.id);
+  actor.bubble.hidden = !message;
+  if (!message) return;
+  const text = [message.text, message.quip].filter(Boolean).join(' — ');
+  if (actor.bubble.textContent !== text) actor.bubble.textContent = text;
+  voice.offer(message, settings?.language);
+  // Position against the viewport so speech remains readable near screen edges.
+  const width = Math.min(260, window.innerWidth - 16);
+  actor.bubble.style.width = `${width}px`;
+  actor.bubble.style.left = `${clamp(actor.x + avatarSizeFor(actor.agent) / 2 - width / 2, 8, window.innerWidth - width - 8) - actor.x}px`;
+  actor.bubble.style.top = actor.y < 110
+    ? `${Math.min(actorHeight(actor) + 8, window.innerHeight - actor.y - 104)}px` : '-100px';
+}
+
 function frameIndex(animation, time) {
   const total = animation.durations.reduce((sum, duration) => sum + duration, 0);
   let cursor = time % total;
@@ -308,6 +347,9 @@ function frameIndex(animation, time) {
 
 function animationFor(actor, moving) {
   if (actor.agent.status === 'attention') return animations.waiting;
+  const reaction = reactions.get(actor.agent.sessionId, actor.agent.id);
+  if (reaction?.mood === 'proud' || reaction?.mood === 'amused') return animations.wave;
+  if (reaction?.mood === 'curious' && !moving) return animations.review;
   if (actor.agent.status === 'done') return animations.wave;
   if (['idle', 'dormant'].includes(actor.agent.status)) return animations.idle;
   if (moving && actor.velocityX > 4) return animations.right;
@@ -397,6 +439,7 @@ function constrainActor(actor) {
 }
 
 function animate(time) {
+  for (const actor of actors.values()) updateSpeech(actor);
   const deltaSeconds = Math.min(0.05, Math.max(0, (time - previousFrame) / 1000));
   previousFrame = time;
   for (const actor of actors.values()) {
@@ -463,6 +506,12 @@ function finishDrag(event) {
   updateActorElement(actor);
   actor.element.releasePointerCapture?.(event.pointerId);
   draggedActor = null;
+  actor.element.classList.add('just-dropped');
+  setTimeout(() => actor.element.classList.remove('just-dropped'), 500);
+  if (settings.companionRemarks) {
+    if (settings.companionCloudEnabled) void api.companionMoved(actor.agent.sessionId, actor.agent.id);
+    else reactions.moved(actor.agent.sessionId, actor.agent.id);
+  }
 }
 
 world.addEventListener('pointerup', finishDrag);
@@ -483,12 +532,15 @@ window.addEventListener('resize', () => {
 
 api.onState((value) => {
   snapshot = value || { sessions: [] };
+  reactions.observe(snapshot, { enabled: settings?.companionRemarks, language: settings?.language, cloud: settings?.companionCloudEnabled });
   reconcileActors();
 });
 api.onSettings((value) => {
   const nextZoneSignature = JSON.stringify(value.zone || null);
   const zoneChanged = nextZoneSignature !== zoneSignature;
   settings = value.settings;
+  voice.setMuted(settings.companionVoiceMuted || !settings.companionRemarks || !settings.overlayEnabled);
+  reactions.observe(snapshot, { enabled: settings?.companionRemarks, language: settings?.language, cloud: settings?.companionCloudEnabled });
   zone = value.zone;
   zoneSignature = nextZoneSignature;
   updateInteractiveClass();
@@ -507,10 +559,20 @@ api.onLibrary((value) => {
   reconcileActors();
 });
 
+api.onReaction((reaction) => {
+  if (!settings?.companionRemarks || !settings?.companionCloudEnabled) return;
+  if (reactions.accept(reaction)) reconcileActors();
+});
+
+// Remove briefly retained idle actors after their final speech expires.
+setInterval(reconcileActors, 1000);
+
 async function initialize() {
   const bootstrap = await api.getBootstrap();
   snapshot = bootstrap.state;
+  reactions.observe(snapshot, { enabled: false });
   settings = bootstrap.settings;
+  voice.setMuted(settings.companionVoiceMuted || !settings.companionRemarks || !settings.overlayEnabled);
   avatars = bootstrap.avatars;
   zone = bootstrap.zone;
   zoneSignature = JSON.stringify(zone || null);

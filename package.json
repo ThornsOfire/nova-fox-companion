@@ -1,7 +1,7 @@
 {
-  "name": "codex-avatars",
+  "name": "nova-companion",
   "version": "0.7.2",
-  "description": "Independent Codex Pet avatars roaming invisibly across one or more Windows displays.",
+  "description": "A playful desktop fox companion with Codex activity, personality, and optional spoken quips.",
   "main": "src/main.cjs",
   "type": "commonjs",
   "private": true,
@@ -26,8 +26,8 @@
     "dist": "electron-builder --win nsis --publish never"
   },
   "build": {
-    "appId": "dev.codexavatars.desktop",
-    "productName": "Codex Avatars",
+    "appId": "dev.novacompanion.desktop",
+    "productName": "Nova Companion",
     "asar": true,
     "directories": { "output": "dist" },
     "files": ["src/**/*", "assets/**/*", "package.json"],

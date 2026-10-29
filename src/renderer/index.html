@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: file: codex-avatar:; connect-src 'none'">
-    <title>Codex Avatars</title>
+    <title>Nova Companion</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
@@ -12,7 +12,7 @@
       <div class="brand-lockup">
         <img src="../../assets/icon.png" width="42" height="42" alt="">
         <div>
-          <h1>Codex Avatars</h1>
+          <h1>Nova Companion</h1>
           <p id="header-subtitle"></p>
         </div>
       </div>
@@ -32,6 +32,47 @@
     </header>
 
     <main class="settings-layout">
+      <section class="panel" id="companion-panel" aria-labelledby="companion-title">
+        <p class="eyebrow">NOVA COMPANION</p>
+        <h2 id="companion-title">Personality &amp; voice</h2>
+        <p>Let Nova add an occasional aside. Agent status stays visual; only quips use voice.</p>
+        <div class="nova-fields">
+          <label class="compact-toggle"><input id="nova-cloud" type="checkbox"> Enable cloud-generated remarks</label>
+          <label>Personality<select id="nova-personality">
+            <option value="dry">Dry wit</option><option value="playful">Playful</option>
+            <option value="encouraging">Encouraging</option><option value="gremlin">Absolute gremlin</option>
+          </select></label>
+          <label>GPT model<select id="nova-model">
+            <option value="gpt-6-luna">GPT-6 Luna · lightweight</option>
+            <option value="gpt-6.1-terra">GPT-6.1 Terra</option>
+            <option value="gpt-6.1-sol">GPT-6.1 Sol</option>
+          </select></label>
+          <label>Seconds between quips<input id="nova-cooldown" type="number" min="20" max="600"></label>
+          <label>Daily request limit<input id="nova-limit" type="number" min="1" max="500"></label>
+          <label>Daily local budget guard (USD)<input id="nova-budget" type="number" min="0.001" max="10" step="0.001"></label>
+        </div>
+        <p class="nova-help">Cloud mode sends a status cue, personality, language, your saved personal notes, and recent direct conversations with Nova to OpenAI. It never reads other agents’ conversations or takes screenshots. Each attempt reserves a conservative model-dependent amount locally, including previews and failures. This estimate is not a provider billing cap; set a provider-side limit too. Daily counters reset at midnight Pacific time.</p>
+        <div class="nova-key-row">
+          <label>OpenAI API key<input id="nova-key" type="password" autocomplete="off" spellcheck="false" placeholder="Enter key to replace it"></label>
+          <button id="nova-save-key" type="button" class="quiet-button">Save key securely</button>
+          <button id="nova-remove-key" type="button" class="quiet-button">Remove key</button>
+        </div>
+        <p class="nova-help">Saved with OS encryption. The key is never returned to the settings page. Cloud requests stay off until enabled above.</p>
+        <button id="nova-preview" type="button" class="primary-button">Preview a reaction</button>
+        <button id="nova-mute" type="button" class="quiet-button">Mute voice</button>
+        <p id="nova-connection" role="status" aria-live="polite"></p>
+        <p id="nova-preview-result" role="status" aria-live="polite"></p>
+        <h3>Chat &amp; memory</h3>
+        <p class="nova-help">Nova stores her last 100 chat entries and remarks with OS encryption. The latest eight entries and your personal notes accompany model requests. A pet-sized memory, separate from your other agents.</p>
+        <label class="nova-notes">About you · lasting notes<textarea id="nova-notes" maxlength="1000" rows="3" placeholder="Things you want Nova to remember"></textarea></label>
+        <button id="nova-save-notes" type="button" class="quiet-button">Save notes</button>
+        <button id="nova-clear-memory" type="button" class="quiet-button">Clear all companion memory</button>
+        <div id="nova-chat-log" class="nova-chat-log" role="log" aria-live="polite"></div>
+        <form id="nova-chat-form" class="nova-key-row">
+          <label>Talk to Nova<input id="nova-chat-input" maxlength="500" autocomplete="off" placeholder="Tell Nova something…"></label>
+          <button id="nova-chat-send" type="submit" class="primary-button">Send</button>
+        </form>
+      </section>
       <section class="panel control-panel">
         <div class="section-heading">
           <div>
@@ -91,6 +132,14 @@
           <label class="compact-toggle">
             <input id="labels-toggle" type="checkbox">
             <span id="labels-title"></span>
+          </label>
+          <label class="compact-toggle">
+            <input id="companion-remarks-toggle" type="checkbox">
+            <span id="companion-remarks-title">Show companion remarks</span>
+          </label>
+          <label class="compact-toggle">
+            <input id="companion-voice-toggle" type="checkbox">
+            <span id="companion-voice-title">Mute companion voice</span>
           </label>
           <label class="compact-toggle">
             <input id="agent-details-toggle" type="checkbox">
@@ -476,5 +525,7 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="./renderer.js"></script>
+    <script src="./companion-voice.js"></script>
+    <script src="./companion-settings.js"></script>
   </body>
 </html>

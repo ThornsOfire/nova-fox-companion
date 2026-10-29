@@ -17,8 +17,12 @@ const {
   screen,
   shell,
   Tray,
+  safeStorage,
 } = require('electron');
 const { AgentStore } = require('./core/agent-store.cjs');
+const { CompanionBrain, CompanionKeyStore, CompanionMemory } = require('./core/companion-brain.cjs');
+let companionBrain = null;
+let companionKeys = null;
 const { reconcileAgentActivityRecords } = require('./core/agent-activity-reconciler.cjs');
 const {
   AgentMetadataResolver,
@@ -148,6 +152,8 @@ function findArgument(prefix) {
 }
 
 async function promptForUpdate() {
+  // Fork releases need their own verified updater; never offer an upstream installer.
+  if (['nova-companion', 'Nova Companion'].includes(app.getName())) return;
   if (!app.isPackaged || updateCheckStarted) return;
   updateCheckStarted = true;
   let update = null;
@@ -163,7 +169,7 @@ async function promptForUpdate() {
   const french = settings?.language === 'fr';
   const result = await dialog.showMessageBox(settingsWindow, {
     type: 'info',
-    title: 'Codex Avatars',
+    title: 'Nova Companion',
     message: french
       ? `Une mise à jour de Codex Avatars (${update.version}) est disponible.`
       : `A Codex Avatars update (${update.version}) is available.`,
@@ -212,7 +218,7 @@ async function openFeedback() {
   const french = settings?.language === 'fr';
   const result = await dialog.showMessageBox(settingsWindow, {
     type: 'question',
-    title: 'Codex Avatars',
+    title: 'Nova Companion',
     message: french ? 'Que souhaitez-vous partager ?' : 'What would you like to share?',
     detail: french
       ? 'GitHub s’ouvrira avec un brouillon guidé et la version de Codex Avatars déjà renseignée.'
@@ -527,7 +533,9 @@ function broadcast(channel, payload) {
 }
 
 function broadcastState() {
-  broadcast('avatars:state', store.snapshot());
+  const state = store.snapshot();
+  broadcast('avatars:state', state);
+  companionBrain?.observe(state);
 }
 
 function broadcastSettings() {
@@ -708,6 +716,7 @@ function syncOverlayVisibility() {
 }
 
 async function applySettingsPatch(patch, options = {}) {
+  companionBrain?.cancel();
   const previousZone = JSON.stringify(settings?.zone);
   settings = await settingsStore.update(patch);
   overlayHitTest = false;
@@ -871,7 +880,7 @@ function createSettingsWindow() {
     height: 780,
     minWidth: 720,
     minHeight: 620,
-    title: 'Codex Avatars',
+    title: 'Nova Companion',
     autoHideMenuBar: true,
     backgroundColor: '#0b0b10',
     show: false,
@@ -958,7 +967,7 @@ function createTray() {
   const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'icon.png'))
     .resize({ width: 20, height: 20 });
   tray = new Tray(icon);
-  tray.setToolTip('Codex Avatars');
+  tray.setToolTip('Nova Companion');
   tray.on('click', showSettingsWindow);
   rebuildTrayMenu();
 }
@@ -967,12 +976,18 @@ function rebuildTrayMenu() {
   if (!tray || !settings) return;
   const french = settings.language === 'fr';
   tray.setToolTip(settings.overlayEnabled
-    ? 'Codex Avatars'
-    : (french ? 'Codex Avatars — désactivés' : 'Codex Avatars — disabled'));
+    ? 'Nova Companion'
+    : (french ? 'Nova Companion — désactivés' : 'Nova Companion — disabled'));
   tray.setContextMenu(Menu.buildFromTemplate([
     {
       label: french ? 'Ouvrir les réglages' : 'Open settings',
       click: showSettingsWindow,
+    },
+    {
+      label: french ? 'Couper la voix du compagnon' : 'Mute companion voice',
+      type: 'checkbox',
+      checked: settings.companionVoiceMuted,
+      click: (item) => void applySettingsPatch({ companionVoiceMuted: item.checked }),
     },
     {
       label: settings.overlayEnabled
@@ -1121,6 +1136,50 @@ function requireWindowSender(event, window, role) {
 }
 
 function registerIpc() {
+  ipcMain.handle('avatars:companion-chat', async (event, text) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    return companionBrain.generate(null, text);
+  });
+  ipcMain.handle('avatars:companion-memory', async (event, notes) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    if (companionBrain.busy) return { error: 'Wait for the current reaction before changing memory.' };
+    companionBrain.cancel();
+    try {
+      if (notes === null) await companionBrain.memory.clear();
+      else await companionBrain.memory.notes(notes);
+      return companionBrain.status();
+    } catch { return { error: 'Memory could not be updated.' }; }
+  });
+  ipcMain.handle('avatars:companion-status', async (event) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    return companionBrain.status();
+  });
+  ipcMain.handle('avatars:companion-key', async (event, key) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    companionBrain.cancel();
+    try {
+      if (key === null) await companionKeys.remove();
+      else await companionKeys.save(key);
+      return companionBrain.status();
+    } catch { return { error: 'Could not save the key. Check the key format and secure OS storage.' }; }
+  });
+  ipcMain.handle('avatars:companion-preview', async (event) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    return companionBrain.generate();
+  });
+  ipcMain.handle('avatars:companion-moved', async (event, sessionId, agentId) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    if (typeof sessionId !== 'string' || typeof agentId !== 'string') return;
+    const key = `${sessionId}/${agentId}`;
+    const status = companionBrain.previous.get(key);
+    if (status && ['working', 'idle', 'done', 'attention', 'dormant'].includes(status)) {
+      await companionBrain.generate({ sessionId, agentId, key, status, cue: 'moved' });
+    }
+  });
+  ipcMain.handle('avatars:set-voice-muted', async (event, muted) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    await applySettingsPatch({ companionVoiceMuted: Boolean(muted) });
+  });
   ipcMain.handle('avatars:get-settings-bootstrap', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return settingsBootstrapPayload();
@@ -1313,10 +1372,16 @@ function registerIpc() {
 }
 
 async function startApplication() {
-  app.setAppUserModelId('dev.codexavatars.desktop');
+  app.setAppUserModelId('dev.novacompanion.desktop');
   normalizeLaunchAtLogin(app, process.execPath);
   settingsStore = new SettingsStore(path.join(app.getPath('userData'), 'settings.json'));
   settings = await settingsStore.load();
+  companionKeys = new CompanionKeyStore(path.join(app.getPath('userData'), 'companion-key.json'), safeStorage);
+  companionBrain = new CompanionBrain({ directory: app.getPath('userData'), keys: companionKeys,
+    memory: new CompanionMemory(path.join(app.getPath('userData'), 'companion-memory.json'), safeStorage),
+    getSettings: () => settings, emit: (reaction) => broadcast('avatars:reaction', reaction) });
+  await companionBrain.load();
+  companionBrain.observe(store.snapshot());
   marketplaceClient = new MarketplaceClient({
     cacheDirectory: path.join(app.getPath('userData'), 'marketplace-cache'),
     renderThumbnail: (spritesheet) => {
@@ -1420,6 +1485,7 @@ app.on('window-all-closed', () => {
   // The tray owns the process lifetime. Closing settings never removes the avatars.
 });
 app.on('before-quit', () => {
+  companionBrain?.cancel();
   isQuitting = true;
 });
 app.on('will-quit', () => {
