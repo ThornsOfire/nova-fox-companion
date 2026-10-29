@@ -2,6 +2,7 @@
 
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { validateFrameAtlas } = require('./frame-atlas.cjs');
 
 function isInsideDirectory(directory, candidate) {
   const relative = path.relative(directory, candidate);
@@ -29,6 +30,11 @@ async function readAvatarPackage(directory, source = 'custom') {
   if (!stat.isFile()) throw new Error(`Missing spritesheet for ${id}`);
 
   const spriteVersionNumber = Number(manifest.spriteVersionNumber) === 2 ? 2 : 1;
+  let frameAtlas = null;
+  if (manifest.frameAtlas) {
+    if (source !== 'bundled') throw new Error('Custom frame maps are restricted to bundled Nova artwork.');
+    frameAtlas = validateFrameAtlas(manifest.frameAtlas);
+  }
   return {
     id,
     displayName: typeof manifest.displayName === 'string' && manifest.displayName.trim()
@@ -36,6 +42,7 @@ async function readAvatarPackage(directory, source = 'custom') {
       : id,
     description: typeof manifest.description === 'string' ? manifest.description.trim() : '',
     spriteVersionNumber,
+    frameAtlas,
     columns: 8,
     rows: spriteVersionNumber === 2 ? 11 : 9,
     source,

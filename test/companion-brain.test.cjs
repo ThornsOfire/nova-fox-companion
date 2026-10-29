@@ -138,6 +138,20 @@ test('corrupt usage ledger fails closed', async (t) => {
   assert.equal(f.calls.length, 0);
 });
 
+test('window capture requires opt-in and a peek cue; ordinary chat never captures', async (t) => {
+  let captures = 0;
+  const f = await fixture(t, { capture: async () => { captures++; return 'synthetic-image'; } });
+  await f.brain.generate(null, null, 'peeking', '123');
+  assert.equal(captures, 0);
+  f.advance(60000); f.settings.companionVisionEnabled = true;
+  await f.brain.generate(null, 'Hello Nova', 'peeking', '123');
+  assert.equal(captures, 0);
+  f.advance(60000);
+  await f.brain.generate(null, null, 'peeking', '123');
+  assert.equal(captures, 1);
+  assert.equal(f.calls.at(-1).screenshot, 'synthetic-image');
+});
+
 test('Pacific midnight resets the durable budget', async (t) => {
   const f = await fixture(t);
   f.settings.companionDailyRequests = 1;

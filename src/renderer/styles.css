@@ -9,6 +9,7 @@
 #nova-connection { font-size: 13px; color: #c4d1dd; }
 .nova-notes { display: grid; gap: 8px; margin: 16px 0; }
 .nova-notes textarea { width: 100%; resize: vertical; padding: 12px; color: #e9fff7; background: #151b23; border: 1px solid #49565f; border-radius: 8px; font: inherit; }
+.nova-notes input { padding: 10px; color: #e9fff7; background: #151b23; border: 1px solid #49565f; border-radius: 8px; font: inherit; }
 .nova-chat-log { max-height: 220px; overflow-y: auto; margin-top: 20px; border-left: 2px solid #80f0c7; padding-left: 14px; }
 .nova-chat-log p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 

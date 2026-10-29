@@ -10,6 +10,11 @@
   function render(value) {
     settings = value;
     element('cloud').checked = value.companionCloudEnabled;
+    element('single').checked = value.singleCompanion;
+    element('fullscreen').checked = value.avoidFullscreen;
+    element('play').checked = value.companionPlayful;
+    element('vision').checked = value.companionVisionEnabled;
+    element('excluded-apps').value = value.companionVisionExcludedApps.join(', ');
     element('personality').value = value.companionPersonality;
     element('model').value = value.companionModel;
     element('cooldown').value = value.companionCooldownSeconds;
@@ -25,7 +30,8 @@
       status.configured ? 'API key saved' : 'No API key saved',
       status.secureStorage ? 'OS encryption available' : 'Secure storage unavailable',
       `${status.usage?.requests || 0} requests · $${(status.usage?.reservedUsd || 0).toFixed(3)} reserved (${status.usage?.day || 'today'})`,
-      `$${status.reservationUsd?.toFixed(3)} reserved per attempt`,
+      `Up to $${status.reservationUsd?.toFixed(3)} reserved per attempt`,
+      status.desktopAvailable ? 'Window awareness ready' : (settings.avoidFullscreen ? 'Waiting for window awareness; fullscreen protection may hide Nova' : 'Window awareness unavailable'),
     ].join(' · ');
     if (status.memory?.error) element('connection').textContent += ' · Memory unavailable';
     if (document.activeElement !== element('notes')) element('notes').value = status.memory?.notes || '';
@@ -38,13 +44,15 @@
     }
     log.scrollTop = log.scrollHeight;
   }
-  const fields = { cloud: 'companionCloudEnabled', personality: 'companionPersonality', model: 'companionModel',
+  const fields = { cloud: 'companionCloudEnabled', single: 'singleCompanion', fullscreen: 'avoidFullscreen', play: 'companionPlayful',
+    vision: 'companionVisionEnabled', 'excluded-apps': 'companionVisionExcludedApps', personality: 'companionPersonality', model: 'companionModel',
     cooldown: 'companionCooldownSeconds', limit: 'companionDailyRequests', budget: 'companionDailyBudgetUsd' };
   for (const [id, key] of Object.entries(fields)) {
     element(id).addEventListener('change', async () => {
       try {
         const control = element(id);
-        await api.updateSettings({ [key]: id === 'cloud' ? control.checked
+        await api.updateSettings({ [key]: ['cloud', 'single', 'fullscreen', 'play', 'vision'].includes(id) ? control.checked
+          : id === 'excluded-apps' ? control.value.split(',')
           : ['personality', 'model'].includes(id) ? control.value : Number(control.value) });
         await refresh();
       } catch { element('connection').textContent = 'Could not save settings.'; }
@@ -103,8 +111,20 @@
     } catch { element('preview-result').textContent = 'Reaction preview unavailable.'; }
     finally { element('preview').disabled = false; }
   });
+  element('vision-preview').addEventListener('click', async () => {
+    element('vision-preview').disabled = true;
+    element('preview-result').textContent = 'Checking the last active app…';
+    try {
+      const result = await api.previewCompanionVision();
+      element('preview-result').textContent = result.error || result.skipped || result.quip || 'Nova chose silence.';
+      if (result.quip) voice.offer(result, settings.language);
+      await refresh();
+    } catch { element('preview-result').textContent = 'Window vision is unavailable for this app.'; }
+    finally { element('vision-preview').disabled = false; }
+  });
   api.onSettings((payload) => render(payload.settings));
   api.onReaction(() => void refresh().catch(() => {}));
+  api.onConversation(() => void refresh().catch(() => {}));
   render((await api.getBootstrap()).settings);
   await refresh();
 }()).catch(() => {

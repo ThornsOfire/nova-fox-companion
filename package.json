@@ -1,5 +1,5 @@
 {
-  "name": "nova-companion",
+  "name": "nova-fox-companion",
   "version": "0.7.2",
   "description": "A playful desktop fox companion with Codex activity, personality, and optional spoken quips.",
   "main": "src/main.cjs",
@@ -17,6 +17,7 @@
     "test": "node --test",
     "demo": "node scripts/send-demo-event.mjs",
     "preview": "electron . --capture=artifacts/preview.png",
+    "preview:nova": "electron scripts/preview-nova.cjs",
     "preview:settings": "electron . --capture-settings=artifacts/settings.png",
     "setup": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./install.ps1",
     "icon:render": "electron scripts/render-icon.cjs",
@@ -26,13 +27,15 @@
     "dist": "electron-builder --win nsis --publish never"
   },
   "build": {
-    "appId": "dev.novacompanion.desktop",
-    "productName": "Nova Companion",
+    "appId": "dev.novafoxcompanion.desktop",
+    "productName": "Nova Fox Companion",
     "asar": true,
     "directories": { "output": "dist" },
     "files": ["src/**/*", "assets/**/*", "package.json"],
     "extraResources": [
       { "from": "scripts/codex-hook.ps1", "to": "hooks/codex-hook.ps1" },
+      { "from": "scripts/desktop-sensor.ps1", "to": "hooks/desktop-sensor.ps1" },
+      { "from": "scripts/capture-window.ps1", "to": "hooks/capture-window.ps1" },
       { "from": ".agents", "to": "integration/.agents" },
       { "from": "plugins", "to": "integration/plugins" }
     ],

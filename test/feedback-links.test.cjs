@@ -15,10 +15,10 @@ const {
 const root = path.join(__dirname, '..');
 
 test('builds only fixed GitHub feedback URLs with a guided draft', () => {
-  assert.equal(FEEDBACK_BASE_URL, 'https://github.com/ThornsOfire/nova-companion/issues/new');
+  assert.equal(FEEDBACK_BASE_URL, 'https://github.com/ThornsOfire/nova-fox-companion/issues/new');
   const url = new URL(buildFeedbackUrl({ kind: 'bug', version: '0.7.0-beta.7', language: 'en' }));
   assert.equal(url.origin, 'https://github.com');
-  assert.equal(url.pathname, '/ThornsOfire/nova-companion/issues/new');
+  assert.equal(url.pathname, '/ThornsOfire/nova-fox-companion/issues/new');
   assert.equal(url.searchParams.get('labels'), 'bug');
   assert.match(url.searchParams.get('title'), /^\[Bug\]/);
   assert.match(url.searchParams.get('body'), /Codex Avatars: 0\.7\.0-beta\.7/);

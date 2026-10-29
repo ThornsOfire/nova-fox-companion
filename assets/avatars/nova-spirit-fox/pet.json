@@ -1,0 +1,403 @@
+{
+  "id": "nova-spirit-fox",
+  "displayName": "Nova · Spirit Fox",
+  "description": "An original charcoal spirit fox with teal eyes and an orange ember heart.",
+  "spriteVersionNumber": 2,
+  "spritesheetPath": "spritesheet.png",
+  "frameAtlas": {
+    "format": "nova-frames-v1",
+    "width": 1027,
+    "height": 1531,
+    "animations": {
+      "idle": [
+        {
+          "x": 0,
+          "y": 15,
+          "width": 128,
+          "height": 140,
+          "duration": 360
+        },
+        {
+          "x": 128,
+          "y": 15,
+          "width": 128,
+          "height": 140,
+          "duration": 360
+        },
+        {
+          "x": 256,
+          "y": 15,
+          "width": 128,
+          "height": 140,
+          "duration": 360
+        },
+        {
+          "x": 384,
+          "y": 15,
+          "width": 128,
+          "height": 140,
+          "duration": 360
+        },
+        {
+          "x": 512,
+          "y": 15,
+          "width": 128,
+          "height": 140,
+          "duration": 360
+        }
+      ],
+      "right": [
+        {
+          "x": 0,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        },
+        {
+          "x": 128,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        },
+        {
+          "x": 256,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        },
+        {
+          "x": 384,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        },
+        {
+          "x": 512,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        },
+        {
+          "x": 640,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        },
+        {
+          "x": 768,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        },
+        {
+          "x": 896,
+          "y": 160,
+          "width": 128,
+          "height": 125,
+          "duration": 110
+        }
+      ],
+      "left": [
+        {
+          "x": 0,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        },
+        {
+          "x": 128,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        },
+        {
+          "x": 256,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        },
+        {
+          "x": 384,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        },
+        {
+          "x": 512,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        },
+        {
+          "x": 640,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        },
+        {
+          "x": 768,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        },
+        {
+          "x": 896,
+          "y": 286,
+          "width": 128,
+          "height": 127,
+          "duration": 110
+        }
+      ],
+      "wave": [
+        {
+          "x": 0,
+          "y": 414,
+          "width": 128,
+          "height": 144,
+          "duration": 220
+        },
+        {
+          "x": 128,
+          "y": 414,
+          "width": 128,
+          "height": 144,
+          "duration": 220
+        },
+        {
+          "x": 256,
+          "y": 414,
+          "width": 128,
+          "height": 144,
+          "duration": 220
+        },
+        {
+          "x": 384,
+          "y": 414,
+          "width": 128,
+          "height": 144,
+          "duration": 220
+        }
+      ],
+      "sleep": [
+        {
+          "x": 0,
+          "y": 562,
+          "width": 128,
+          "height": 108,
+          "duration": 650
+        },
+        {
+          "x": 128,
+          "y": 562,
+          "width": 128,
+          "height": 108,
+          "duration": 650
+        },
+        {
+          "x": 256,
+          "y": 562,
+          "width": 128,
+          "height": 108,
+          "duration": 650
+        },
+        {
+          "x": 384,
+          "y": 562,
+          "width": 128,
+          "height": 108,
+          "duration": 650
+        },
+        {
+          "x": 512,
+          "y": 562,
+          "width": 128,
+          "height": 108,
+          "duration": 650
+        }
+      ],
+      "carried": [
+        {
+          "x": 0,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        },
+        {
+          "x": 128,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        },
+        {
+          "x": 256,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        },
+        {
+          "x": 384,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        },
+        {
+          "x": 512,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        },
+        {
+          "x": 640,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        },
+        {
+          "x": 768,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        },
+        {
+          "x": 896,
+          "y": 681,
+          "width": 128,
+          "height": 133,
+          "duration": 180
+        }
+      ],
+      "waiting": [
+        {
+          "x": 0,
+          "y": 819,
+          "width": 128,
+          "height": 139,
+          "duration": 350
+        },
+        {
+          "x": 128,
+          "y": 819,
+          "width": 128,
+          "height": 139,
+          "duration": 350
+        },
+        {
+          "x": 256,
+          "y": 819,
+          "width": 128,
+          "height": 139,
+          "duration": 350
+        },
+        {
+          "x": 384,
+          "y": 819,
+          "width": 128,
+          "height": 139,
+          "duration": 350
+        },
+        {
+          "x": 512,
+          "y": 819,
+          "width": 128,
+          "height": 139,
+          "duration": 350
+        }
+      ],
+      "working": [
+        {
+          "x": 0,
+          "y": 962,
+          "width": 128,
+          "height": 130,
+          "duration": 300
+        },
+        {
+          "x": 128,
+          "y": 962,
+          "width": 128,
+          "height": 130,
+          "duration": 300
+        },
+        {
+          "x": 256,
+          "y": 962,
+          "width": 128,
+          "height": 130,
+          "duration": 300
+        },
+        {
+          "x": 384,
+          "y": 962,
+          "width": 128,
+          "height": 130,
+          "duration": 300
+        },
+        {
+          "x": 512,
+          "y": 962,
+          "width": 128,
+          "height": 130,
+          "duration": 300
+        }
+      ],
+      "review": [
+        {
+          "x": 0,
+          "y": 1105,
+          "width": 128,
+          "height": 130,
+          "duration": 350
+        },
+        {
+          "x": 128,
+          "y": 1105,
+          "width": 128,
+          "height": 130,
+          "duration": 350
+        },
+        {
+          "x": 256,
+          "y": 1105,
+          "width": 128,
+          "height": 130,
+          "duration": 350
+        },
+        {
+          "x": 384,
+          "y": 1105,
+          "width": 128,
+          "height": 130,
+          "duration": 350
+        },
+        {
+          "x": 512,
+          "y": 1105,
+          "width": 128,
+          "height": 130,
+          "duration": 350
+        }
+      ]
+    }
+  }
+}

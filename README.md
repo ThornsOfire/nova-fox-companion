@@ -1,6 +1,8 @@
-# Nova Companion
+# Nova Fox Companion
 
-An evolving fork of Codex Avatars with original companion remarks, optional speech, GPT model selection, and encrypted companion memory. See [Nova Companion development notes](docs/nova-companion.md) for implemented behavior, voice controls, and planned work. Upstream documentation follows. Integration identifiers remain compatible with upstream; do not install both companions against the same hooks.
+An evolving fork of Codex Avatars with an original spirit fox, floating spirit chat controls, optional speech, GPT model selection, encrypted memory, fullscreen avoidance, and playful desktop behavior. See [Nova Fox Companion development notes](docs/nova-companion.md) for implemented behavior and validation limits. Upstream documentation follows. Integration identifiers remain compatible with upstream; do not install both companions against the same hooks.
+
+Try the isolated renderer preview with `npm run preview:nova -- --scene=chat`. It uses synthetic data and makes no model calls or changes to Codex hooks. Other preview scenes: `sleep`, `peek`, `play`, `escape`, `fullscreen`.
 
 ## Upstream: Codex Avatars
 
@@ -101,6 +103,8 @@ Open the character studio in settings, describe the appearance, style, personali
 The generated task begins with `/goal` to retain a durable completion objective, then explicitly invokes `$hatch-pet`, resolves Codex's bundled workspace Python before running any script, verifies Pillow, validates a `1536x2288` v2 atlas, and installs `pet.json` beside `spritesheet.webp` under `~/.codex/pets/<pet-id>`. The renderer refreshes that shared library every five seconds.
 
 ## Privacy
+
+Nova Fox Companion adds opt-in OpenAI personality requests, encrypted direct-chat memory, and separately opt-in window vision with app exclusions. Window/cursor geometry stays local. Window images are sent only when the vision feature is enabled and are not saved locally. See the [current development notes](docs/nova-companion.md) for the exact data boundaries and validation status. The upstream bridge behavior below remains in place.
 
 The hook allowlists only lifecycle name, session/turn/agent ids, agent type, optional agent name/model/effort, and the final project-folder name. The full working-directory path never crosses the bridge. Prompts, tool arguments, command output, transcripts, messages, source contents, and secrets are excluded.
 

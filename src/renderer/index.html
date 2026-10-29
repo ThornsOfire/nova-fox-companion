@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: file: codex-avatar:; connect-src 'none'">
-    <title>Nova Companion</title>
+    <title>Nova Fox Companion</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
@@ -12,7 +12,7 @@
       <div class="brand-lockup">
         <img src="../../assets/icon.png" width="42" height="42" alt="">
         <div>
-          <h1>Nova Companion</h1>
+          <h1>Nova Fox Companion</h1>
           <p id="header-subtitle"></p>
         </div>
       </div>
@@ -33,11 +33,15 @@
 
     <main class="settings-layout">
       <section class="panel" id="companion-panel" aria-labelledby="companion-title">
-        <p class="eyebrow">NOVA COMPANION</p>
+        <p class="eyebrow">NOVA FOX COMPANION</p>
         <h2 id="companion-title">Personality &amp; voice</h2>
         <p>Let Nova add an occasional aside. Agent status stays visual; only quips use voice.</p>
         <div class="nova-fields">
           <label class="compact-toggle"><input id="nova-cloud" type="checkbox"> Enable cloud-generated remarks</label>
+          <label class="compact-toggle"><input id="nova-single" type="checkbox"> One Nova follows all agents</label>
+          <label class="compact-toggle"><input id="nova-fullscreen" type="checkbox"> Avoid fullscreen displays</label>
+          <label class="compact-toggle"><input id="nova-play" type="checkbox"> Cursor play and window peeking</label>
+          <label class="compact-toggle"><input id="nova-vision" type="checkbox"> Allow cloud vision while peeking</label>
           <label>Personality<select id="nova-personality">
             <option value="dry">Dry wit</option><option value="playful">Playful</option>
             <option value="encouraging">Encouraging</option><option value="gremlin">Absolute gremlin</option>
@@ -51,13 +55,16 @@
           <label>Daily request limit<input id="nova-limit" type="number" min="1" max="500"></label>
           <label>Daily local budget guard (USD)<input id="nova-budget" type="number" min="0.001" max="10" step="0.001"></label>
         </div>
-        <p class="nova-help">Cloud mode sends a status cue, personality, language, your saved personal notes, and recent direct conversations with Nova to OpenAI. It never reads other agents’ conversations or takes screenshots. Each attempt reserves a conservative model-dependent amount locally, including previews and failures. This estimate is not a provider billing cap; set a provider-side limit too. Daily counters reset at midnight Pacific time.</p>
+        <p class="nova-help">Ordinary cloud requests send a status cue, personality, language, your saved notes, and recent direct conversations with Nova to OpenAI. They do not read other agents’ transcript files. Optional window vision can also send the selected window image when separately enabled; see its controls below. Each attempt reserves a conservative model-dependent amount locally, including previews and failures. This estimate is not a provider billing cap; set a provider-side limit too. Daily counters reset at midnight Pacific time.</p>
         <div class="nova-key-row">
           <label>OpenAI API key<input id="nova-key" type="password" autocomplete="off" spellcheck="false" placeholder="Enter key to replace it"></label>
           <button id="nova-save-key" type="button" class="quiet-button">Save key securely</button>
           <button id="nova-remove-key" type="button" class="quiet-button">Remove key</button>
         </div>
         <p class="nova-help">Saved with OS encryption. The key is never returned to the settings page. Cloud requests stay off until enabled above.</p>
+        <p class="nova-help">Optional window vision is off by default. Enabling it allows Nova to send a small capture of the window she is peeking behind to OpenAI; that image may contain private information visible in the app. Captures are not saved to disk or companion memory. Fullscreen windows, unavailable windows, and excluded apps are skipped. Ordinary agent updates and direct chat do not capture images.</p>
+        <label class="nova-notes">Never capture these apps · process names, comma-separated<input id="nova-excluded-apps" placeholder="1password, bitwarden, keepass, lockapp"></label>
+        <button id="nova-vision-preview" type="button" class="quiet-button">Peek at last active app</button>
         <button id="nova-preview" type="button" class="primary-button">Preview a reaction</button>
         <button id="nova-mute" type="button" class="quiet-button">Mute voice</button>
         <p id="nova-connection" role="status" aria-live="polite"></p>

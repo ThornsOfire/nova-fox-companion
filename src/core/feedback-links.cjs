@@ -1,6 +1,6 @@
 'use strict';
 
-const FEEDBACK_BASE_URL = 'https://github.com/ThornsOfire/nova-companion/issues/new';
+const FEEDBACK_BASE_URL = 'https://github.com/ThornsOfire/nova-fox-companion/issues/new';
 const PET_REPORT_BASE_URL = 'https://github.com/Kajdrak2/awesome-codex-pet/issues/new';
 const FEEDBACK_KINDS = new Set(['bug', 'suggestion']);
 const PET_REPORT_REASONS = Object.freeze([

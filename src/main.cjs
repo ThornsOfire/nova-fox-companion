@@ -20,6 +20,19 @@ const {
   safeStorage,
 } = require('electron');
 const { AgentStore } = require('./core/agent-store.cjs');
+const { DesktopSensor } = require('./core/desktop-sensor.cjs');
+const { allowedWindow, captureWindow } = require('./core/window-vision.cjs');
+let lastForegroundWindowId = null;
+const { readPngDimensions } = require('./core/frame-atlas.cjs');
+const { blockedDisplays, safeZones } = require('./renderer/desktop-play.js');
+let desktopSensor = null;
+let desktopTimer = null;
+let desktopSample = { available: false, windows: [], timestamp: 0 };
+let fullscreenSuppressed = false;
+let overlayControlHitTest = false;
+let lastCursorPoint = null;
+let cursorIdleSince = Date.now();
+const knownChatSessions = new Set();
 const { CompanionBrain, CompanionKeyStore, CompanionMemory } = require('./core/companion-brain.cjs');
 let companionBrain = null;
 let companionKeys = null;
@@ -153,7 +166,7 @@ function findArgument(prefix) {
 
 async function promptForUpdate() {
   // Fork releases need their own verified updater; never offer an upstream installer.
-  if (['nova-companion', 'Nova Companion'].includes(app.getName())) return;
+  if (!['codex-avatars', 'Codex Avatars'].includes(app.getName())) return;
   if (!app.isPackaged || updateCheckStarted) return;
   updateCheckStarted = true;
   let update = null;
@@ -169,7 +182,7 @@ async function promptForUpdate() {
   const french = settings?.language === 'fr';
   const result = await dialog.showMessageBox(settingsWindow, {
     type: 'info',
-    title: 'Nova Companion',
+    title: 'Nova Fox Companion',
     message: french
       ? `Une mise à jour de Codex Avatars (${update.version}) est disponible.`
       : `A Codex Avatars update (${update.version}) is available.`,
@@ -218,7 +231,7 @@ async function openFeedback() {
   const french = settings?.language === 'fr';
   const result = await dialog.showMessageBox(settingsWindow, {
     type: 'question',
-    title: 'Nova Companion',
+    title: 'Nova Fox Companion',
     message: french ? 'Que souhaitez-vous partager ?' : 'What would you like to share?',
     detail: french
       ? 'GitHub s’ouvrira avec un brouillon guidé et la version de Codex Avatars déjà renseignée.'
@@ -260,6 +273,7 @@ function publicAvatar(record) {
     spriteVersionNumber: record.spriteVersionNumber,
     columns: record.columns,
     rows: record.rows,
+    frameAtlas: record.frameAtlas || null,
     source: record.source,
     // `codex-avatar:` works in development but packaged Windows renderers can
     // reject a local WebP response from that custom protocol. Every record has
@@ -485,6 +499,38 @@ function currentZone() {
   return resolveRoamingZone(settings?.zone, currentDisplays());
 }
 
+function desktopPayload() {
+  const now = Date.now();
+  const cursor = screen.getCursorScreenPoint();
+  const moved = !lastCursorPoint || cursor.x !== lastCursorPoint.x || cursor.y !== lastCursorPoint.y;
+  if (moved) cursorIdleSince = now;
+  lastCursorPoint = cursor;
+  const bounds = overlayWindow?.getBounds() || currentZone().windowBounds;
+  const local = (rect) => ({ ...rect, x: rect.x - bounds.x, y: rect.y - bounds.y });
+  const available = desktopSample.available && now - desktopSample.timestamp < 2200;
+  const displays = currentDisplays();
+  const blocked = settings?.avoidFullscreen ? blockedDisplays(desktopSample.windows, displays) : [];
+  const fallback = !settings?.avoidFullscreen || available || Boolean(capturePath || settingsCapturePath);
+  const zones = currentZone().zones.map((rect) => ({ ...rect,
+    x: rect.x + currentZone().windowBounds.x, y: rect.y + currentZone().windowBounds.y }));
+  const safe = fallback ? safeZones(zones, blocked) : [];
+  return { available, timestamp: now, cursor: { x: cursor.x - bounds.x, y: cursor.y - bounds.y },
+    moved, idleMs: now - cursorIdleSince, windows: available ? desktopSample.windows.map(local) : [],
+    safeZones: safe.map(local), blocked: blocked.map(local) };
+}
+
+function publishDesktop() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const payload = desktopPayload();
+  const suppressed = payload.safeZones.length === 0;
+  if (suppressed !== fullscreenSuppressed) {
+    fullscreenSuppressed = suppressed;
+    if (suppressed) { overlayHitTest = false; overlayControlHitTest = false; }
+    syncOverlayVisibility();
+  }
+  overlayWindow.webContents.send('avatars:desktop', payload);
+}
+
 async function refreshAvatarLibrary() {
   const result = await discoverAvatars([
     { path: path.join(codexHomePath(), 'pets'), source: 'codex-pet' },
@@ -494,6 +540,12 @@ async function refreshAvatarLibrary() {
   const valid = [];
   const validationErrors = [];
   for (const record of result.avatars) {
+    if (record.frameAtlas) {
+      const size = await readPngDimensions(record.spritesheetPath);
+      if (size?.width === record.frameAtlas.width && size?.height === record.frameAtlas.height) valid.push(record);
+      else validationErrors.push({ path: record.manifestPath, message: 'Nova frame map does not match the PNG.' });
+      continue;
+    }
     const size = await readWebpDimensions(record.spritesheetPath);
     const expectedHeight = record.spriteVersionNumber === 2 ? 2288 : 1872;
     if (!size || size.width !== 1536 || size.height !== expectedHeight) {
@@ -534,6 +586,8 @@ function broadcast(channel, payload) {
 
 function broadcastState() {
   const state = store.snapshot();
+  for (const session of state.sessions) knownChatSessions.add(session.id);
+  while (knownChatSessions.size > 100) knownChatSessions.delete(knownChatSessions.values().next().value);
   broadcast('avatars:state', state);
   companionBrain?.observe(state);
 }
@@ -678,7 +732,8 @@ function attachWindowDiagnostics(window, label) {
 
 function updateOverlayInputMode() {
   if (!overlayWindow || overlayWindow.isDestroyed() || !settings) return;
-  const ignore = !settings.overlayEnabled || settings.passive || !overlayHitTest;
+  const ignore = !settings.overlayEnabled || fullscreenSuppressed
+    || (!overlayControlHitTest && (settings.passive || !overlayHitTest));
   overlayWindow.setIgnoreMouseEvents(ignore, { forward: true });
 }
 
@@ -704,7 +759,7 @@ function lockWindowToBounds(window, bounds, label) {
 
 function syncOverlayVisibility() {
   if (!overlayWindow || overlayWindow.isDestroyed() || !settings) return;
-  if (!settings.overlayEnabled) {
+  if (!settings.overlayEnabled || fullscreenSuppressed) {
     overlayWindow.hide();
     updateOverlayInputMode();
     return;
@@ -754,6 +809,7 @@ function createOverlayWindow() {
     maximizable: false,
     fullscreenable: false,
     show: false,
+    focusable: false,
     roundedCorners: false,
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
     webPreferences: {
@@ -880,7 +936,7 @@ function createSettingsWindow() {
     height: 780,
     minWidth: 720,
     minHeight: 620,
-    title: 'Nova Companion',
+    title: 'Nova Fox Companion',
     autoHideMenuBar: true,
     backgroundColor: '#0b0b10',
     show: false,
@@ -967,7 +1023,7 @@ function createTray() {
   const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'icon.png'))
     .resize({ width: 20, height: 20 });
   tray = new Tray(icon);
-  tray.setToolTip('Nova Companion');
+  tray.setToolTip('Nova Fox Companion');
   tray.on('click', showSettingsWindow);
   rebuildTrayMenu();
 }
@@ -976,8 +1032,8 @@ function rebuildTrayMenu() {
   if (!tray || !settings) return;
   const french = settings.language === 'fr';
   tray.setToolTip(settings.overlayEnabled
-    ? 'Nova Companion'
-    : (french ? 'Nova Companion — désactivés' : 'Nova Companion — disabled'));
+    ? 'Nova Fox Companion'
+    : (french ? 'Nova Fox Companion — désactivés' : 'Nova Fox Companion — disabled'));
   tray.setContextMenu(Menu.buildFromTemplate([
     {
       label: french ? 'Ouvrir les réglages' : 'Open settings',
@@ -1136,23 +1192,74 @@ function requireWindowSender(event, window, role) {
 }
 
 function registerIpc() {
-  ipcMain.handle('avatars:companion-chat', async (event, text) => {
+  ipcMain.handle('avatars:control-hit-test', (event, value) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    overlayControlHitTest = Boolean(value); updateOverlayInputMode();
+  });
+  ipcMain.handle('avatars:chat-focus', (event, open) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    overlayWindow.setFocusable(Boolean(open));
+    if (open && !fullscreenSuppressed) { overlayWindow.focus(); overlayWindow.webContents.focus(); }
+    else overlayWindow.blur();
+  });
+  ipcMain.handle('avatars:open-companion-settings', (event) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    showSettingsWindow();
+  });
+  ipcMain.handle('avatars:open-companion-chat', async (event) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    showSettingsWindow();
+    if (settingsWindow && !settingsWindow.isDestroyed()) {
+      await settingsWindow.webContents.executeJavaScript("document.getElementById('nova-chat-log')?.scrollIntoView({block:'center'}); document.getElementById('nova-chat-input')?.focus();");
+    }
+  });
+  ipcMain.handle('avatars:open-agent-chat', async (event, sessionId) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    if (typeof sessionId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(sessionId)
+      || !knownChatSessions.has(sessionId)) return { opened: false };
+    await shell.openExternal(`codex://threads/${sessionId}`);
+    return { opened: true };
+  });
+  ipcMain.handle('avatars:companion-history', async (event) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    try { return { turns: (await companionBrain.memory.read()).turns.slice(-30) }; }
+    catch { return { turns: [], error: 'Companion memory is unavailable.' }; }
+  });
+  ipcMain.handle('avatars:companion-play', async (event, cue, windowId) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    if (!['moved', 'peeking', 'cursor_play', 'escaped'].includes(cue)) return { skipped: 'Unknown cue.' };
+    return companionBrain.generate(null, null, cue, typeof windowId === 'string' ? windowId : null);
+  });
+  ipcMain.handle('avatars:companion-vision-preview', async (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
-    return companionBrain.generate(null, text);
+    if (!settings.companionVisionEnabled) return { skipped: 'Enable optional window vision first.' };
+    if (!lastForegroundWindowId) return { skipped: 'Focus another app first, then return to Nova.' };
+    return companionBrain.generate(null, null, 'peeking', lastForegroundWindowId);
+  });
+  ipcMain.handle('avatars:companion-chat', async (event, text) => {
+    if (!isWindowSender(event, overlayWindow)) requireWindowSender(event, settingsWindow, 'settings');
+    const result = await companionBrain.generate(null, text);
+    if (!result.error && !result.skipped) broadcast('avatars:companion-conversation', {
+      text: text.trim(), result, origin: isWindowSender(event, overlayWindow) ? 'overlay' : 'settings',
+    });
+    return result;
   });
   ipcMain.handle('avatars:companion-memory', async (event, notes) => {
     requireWindowSender(event, settingsWindow, 'settings');
     if (companionBrain.busy) return { error: 'Wait for the current reaction before changing memory.' };
     companionBrain.cancel();
     try {
-      if (notes === null) await companionBrain.memory.clear();
+      if (notes === null) {
+        await companionBrain.memory.clear();
+        broadcast('avatars:companion-memory-cleared', {});
+      }
       else await companionBrain.memory.notes(notes);
       return companionBrain.status();
     } catch { return { error: 'Memory could not be updated.' }; }
   });
   ipcMain.handle('avatars:companion-status', async (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
-    return companionBrain.status();
+    return { ...await companionBrain.status(), desktopAvailable: desktopSample.available && Date.now() - desktopSample.timestamp < 2200 };
   });
   ipcMain.handle('avatars:companion-key', async (event, key) => {
     requireWindowSender(event, settingsWindow, 'settings');
@@ -1341,6 +1448,7 @@ function registerIpc() {
     requireWindowSender(event, settingsWindow, 'settings');
     const record = avatarRecords.find((avatar) => avatar.id === avatarId);
     if (!record) throw new Error('The selected Pet is no longer available.');
+    if (record.frameAtlas) throw new Error('Nova uses a bundled animation map, not an exportable native Codex Pet package.');
     const options = {
       title: settings.language === 'fr' ? 'Partager ce Pet' : 'Share this Pet',
       defaultPath: `${record.id}.codexpet`,
@@ -1372,13 +1480,19 @@ function registerIpc() {
 }
 
 async function startApplication() {
-  app.setAppUserModelId('dev.novacompanion.desktop');
+  app.setAppUserModelId('dev.novafoxcompanion.desktop');
   normalizeLaunchAtLogin(app, process.execPath);
   settingsStore = new SettingsStore(path.join(app.getPath('userData'), 'settings.json'));
   settings = await settingsStore.load();
   companionKeys = new CompanionKeyStore(path.join(app.getPath('userData'), 'companion-key.json'), safeStorage);
   companionBrain = new CompanionBrain({ directory: app.getPath('userData'), keys: companionKeys,
     memory: new CompanionMemory(path.join(app.getPath('userData'), 'companion-memory.json'), safeStorage),
+    capture: async (id, signal) => {
+      const window = allowedWindow(desktopSample, id, settings.companionVisionExcludedApps);
+      if (!settings.companionVisionEnabled || !window || blockedDisplays([window], currentDisplays()).length) return null;
+      return captureWindow({ script: app.isPackaged ? path.join(process.resourcesPath, 'hooks', 'capture-window.ps1')
+        : path.join(app.getAppPath(), 'scripts', 'capture-window.ps1'), window, signal });
+    },
     getSettings: () => settings, emit: (reaction) => broadcast('avatars:reaction', reaction) });
   await companionBrain.load();
   companionBrain.observe(store.snapshot());
@@ -1417,7 +1531,7 @@ async function startApplication() {
       const assetPath = assetPaths.get(id);
       if (!assetPath) return new Response('Not found', { status: 404 });
       const data = await fs.readFile(assetPath);
-      return new Response(data, { headers: { 'content-type': 'image/webp', 'cache-control': 'no-store' } });
+      return new Response(data, { headers: { 'content-type': assetPath.endsWith('.png') ? 'image/png' : 'image/webp', 'cache-control': 'no-store' } });
     } catch {
       return new Response('Not found', { status: 404 });
     }
@@ -1430,6 +1544,18 @@ async function startApplication() {
   createTray();
   createOverlayWindow();
   createSettingsWindow();
+  desktopSensor = new DesktopSensor({
+    script: app.isPackaged ? path.join(process.resourcesPath, 'hooks', 'desktop-sensor.ps1')
+      : path.join(app.getAppPath(), 'scripts', 'desktop-sensor.ps1'),
+    convert: (rect) => screen.screenToDipRect(null, rect),
+    onSample: (sample) => {
+      desktopSample = sample;
+      lastForegroundWindowId = sample.windows.find((window) => window.foreground)?.id || lastForegroundWindowId;
+      publishDesktop();
+    },
+  });
+  if (!capturePath && !settingsCapturePath) desktopSensor.start();
+  desktopTimer = setInterval(publishDesktop, 100);
   void promptForUpdate();
 
   if (zonePickerCapturePath) {
@@ -1489,6 +1615,8 @@ app.on('before-quit', () => {
   isQuitting = true;
 });
 app.on('will-quit', () => {
+  desktopSensor?.stop();
+  if (desktopTimer) clearInterval(desktopTimer);
   if (cleanupTimer) clearInterval(cleanupTimer);
   if (agentActivityTimer) clearInterval(agentActivityTimer);
   if (avatarRefreshTimer) clearInterval(avatarRefreshTimer);

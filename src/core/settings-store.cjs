@@ -21,6 +21,11 @@ const DEFAULT_SETTINGS = Object.freeze({
   companionRemarks: true,
   companionVoiceMuted: false,
   companionCloudEnabled: false,
+  companionVisionEnabled: false,
+  companionVisionExcludedApps: ['1password', 'bitwarden', 'keepass', 'lockapp', 'codex', 'chatgpt', 'electron', 'nova fox companion'],
+  avoidFullscreen: true,
+  companionPlayful: true,
+  singleCompanion: true,
   companionModel: 'gpt-6-luna',
   companionPersonality: 'playful',
   companionCooldownSeconds: 45,
@@ -98,6 +103,14 @@ function normalizeSettings(value) {
     companionVoiceMuted: source.companionVoiceMuted === undefined
       ? DEFAULT_SETTINGS.companionVoiceMuted : Boolean(source.companionVoiceMuted),
     companionCloudEnabled: Boolean(source.companionCloudEnabled),
+    companionVisionEnabled: Boolean(source.companionVisionEnabled),
+    companionVisionExcludedApps: source.companionVisionExcludedApps === undefined
+      ? [...DEFAULT_SETTINGS.companionVisionExcludedApps]
+      : normalizeStringArray(source.companionVisionExcludedApps).map((name) => name.toLowerCase().replace(/\.exe$/, ''))
+        .filter((name) => /^[\w .-]{1,80}$/.test(name)).slice(0, 30),
+    avoidFullscreen: source.avoidFullscreen === undefined ? true : Boolean(source.avoidFullscreen),
+    companionPlayful: source.companionPlayful === undefined ? true : Boolean(source.companionPlayful),
+    singleCompanion: source.singleCompanion === undefined ? true : Boolean(source.singleCompanion),
     companionModel: ['gpt-6-luna', 'gpt-6.1-terra', 'gpt-6.1-sol'].includes(source.companionModel)
       ? source.companionModel : 'gpt-6-luna',
     companionPersonality: ['dry', 'playful', 'encouraging', 'gremlin'].includes(source.companionPersonality)

@@ -60,6 +60,39 @@ body {
   user-select: none;
 }
 
+.sprite-art { position: absolute; background-repeat: no-repeat; }
+.nova-ember { position: absolute; left: 66%; top: 72%; width: 14%; height: 12%; border-radius: 50%;
+  background: radial-gradient(ellipse, #ffcb753d, #ff85051a 45%, transparent 75%);
+  box-shadow: 0 0 10px #ff920a30; pointer-events: none; animation: ember-breathe 3.2s ease-in-out infinite; }
+.is-sleeping .nova-ember { left: 50%; top: 78%; animation-duration: 4.5s; }
+@keyframes ember-breathe { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+.companion-spirit { position: absolute; left: calc(50% - 15px); top: -42px; width: 32px; height: 36px;
+  padding: 0; border: 0; background: transparent; cursor: pointer; z-index: 4; }
+.spirit-core { display: block; margin: 4px; width: 24px; height: 27px; border-radius: 65% 50% 60% 45%;
+  transform: rotate(-12deg); background: radial-gradient(circle at 45% 55%, #ffe4a6 10%, #ffb655 45%, #ee8524 85%);
+  box-shadow: 0 0 14px #ffa94477; animation: wisp-float 3s ease-in-out infinite; }
+.spirit-core::after { content: '··'; display: block; color: #573224; font: 900 17px/24px system-ui; letter-spacing: 3px; padding-left: 4px; }
+.companion-spirit:focus-visible { outline: 2px solid #80f0c7; border-radius: 14px; }
+@keyframes wisp-float { 0%,100% { transform: translateY(0) rotate(-12deg); } 50% { transform: translateY(-5px) rotate(8deg); } }
+.companion-chat { position: absolute; z-index: 20; padding: 12px; border: 1px solid #ad7d46; border-radius: 18px;
+  color: #fff8e9; background: #171d26f5; box-shadow: 0 10px 30px #0005; font-size: 12px; cursor: default; }
+.companion-chat[hidden] { display: none; }
+.companion-history { height: 3.2em; overflow-y: auto; overscroll-behavior: contain; margin-bottom: 10px; }
+.history-message { display: block; width: 100%; padding: 0; color: #dbe9e4; background: transparent; border: 0;
+  text-align: left; font: inherit; line-height: 1.6; cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
+.history-message:hover { color: #ffc47b; }
+.companion-chat-line { display: flex; gap: 6px; }
+.companion-chat-line input { width: 0; flex: 1; padding: 9px; border: 1px solid #74817e; border-radius: 9px;
+  color: #fff; background: #0c1219; font: inherit; user-select: text; }
+.companion-chat button:not(.history-message) { padding: 6px 8px; color: #fff0d7; background: #29333d; border: 1px solid #6b746c;
+  border-radius: 8px; font: inherit; cursor: pointer; }
+.spirit-controls { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.spirit-controls .companion-mute { position: static; opacity: 1; }
+.chat-status { display: block; min-height: 1.3em; margin-top: 7px; color: #ffc47b; }
+.cursor-decoy { position: absolute; top: 0; left: 0; color: white; text-shadow: 0 1px 3px #000; font-size: 23px; pointer-events: none; }
+body.is-reduced-motion .nova-ember, body.is-reduced-motion .spirit-core { animation: none; }
+@media (prefers-reduced-motion: reduce) { .nova-ember, .spirit-core { animation: none; } }
+
 .world {
   position: fixed;
   inset: 0;
