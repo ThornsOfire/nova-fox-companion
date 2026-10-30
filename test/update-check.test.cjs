@@ -19,7 +19,7 @@ test('orders prerelease builds below their stable release', () => {
 test('accepts a newer stable GitHub release and its installer asset', () => {
   const update = parseLatestRelease({
     tag_name: 'v0.5.0', html_url: 'https://github.com/Kajdrak2/Codex-avatars/releases/tag/v0.5.0',
-    assets: [{ name: 'Codex Avatars-Setup-0.5.0.exe', browser_download_url: 'https://example.test/setup.exe' }],
+    assets: [{ name: 'Nova Fox Companion-Setup-0.5.0.exe', browser_download_url: 'https://example.test/setup.exe' }],
   }, '0.4.9');
   assert.deepEqual(update, {
     version: '0.5.0', downloadUrl: 'https://example.test/setup.exe',
@@ -34,10 +34,10 @@ test('ignores older, draft, and prerelease releases', () => {
 
 test('requires the exact HTTPS installer asset for the tagged version', () => {
   assert.equal(parseLatestRelease({
-    tag_name: 'v0.5.0', assets: [{ name: 'Codex Avatars-Setup-0.4.9.exe', browser_download_url: 'https://example.test/setup.exe' }],
+    tag_name: 'v0.5.0', assets: [{ name: 'Nova Fox Companion-Setup-0.4.9.exe', browser_download_url: 'https://example.test/setup.exe' }],
   }, '0.4.9'), null);
   assert.equal(parseLatestRelease({
-    tag_name: 'v0.5.0', assets: [{ name: 'Codex Avatars-Setup-0.5.0.exe', browser_download_url: 'http://example.test/setup.exe' }],
+    tag_name: 'v0.5.0', assets: [{ name: 'Nova Fox Companion-Setup-0.5.0.exe', browser_download_url: 'http://example.test/setup.exe' }],
   }, '0.4.9'), null);
 });
 
@@ -45,7 +45,7 @@ test('accepts the GitHub-normalized installer filename', () => {
   const update = parseLatestRelease({
     tag_name: 'v0.6.3',
     assets: [{
-      name: 'Codex.Avatars-Setup-0.6.3.exe',
+      name: 'Nova.Fox.Companion-Setup-0.6.3.exe',
       browser_download_url: 'https://example.test/setup.exe',
     }],
   }, '0.6.2');

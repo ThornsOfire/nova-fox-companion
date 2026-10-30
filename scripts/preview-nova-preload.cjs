@@ -2,9 +2,10 @@
 // Isolated renderer fixture. Never used by the installed application.
 const { contextBridge, ipcRenderer } = require('electron');
 const subscribe = (channel, callback) => ipcRenderer.on(channel, (_event, value) => callback(value));
-contextBridge.exposeInMainWorld('codexAvatars', {
+contextBridge.exposeInMainWorld('novaFoxCompanion', {
   getBootstrap: () => ipcRenderer.invoke('fixture:bootstrap'),
-  companionHistory: async () => ({ turns: [{ role: 'assistant', text: 'I am supervising the nap schedule.' }] }),
+  companionHistory: () => ipcRenderer.invoke('fixture:history'),
+  setCompanionName: (name) => ipcRenderer.invoke('fixture:name', name),
   setOverlayHitTest: async () => {}, setControlHitTest: async () => {}, setChatFocus: async () => {},
   setVoiceMuted: async () => {}, openSettings: async () => {}, openFullChat: async () => {}, openAgentChat: async () => {},
   companionMoved: async () => {}, playReaction: async () => ({ skipped: 'Isolated preview' }),
@@ -14,6 +15,7 @@ contextBridge.exposeInMainWorld('codexAvatars', {
   onLibrary: (callback) => subscribe('fixture:library', callback),
   onReaction: (callback) => subscribe('fixture:reaction', callback),
   onDesktop: (callback) => subscribe('fixture:desktop', callback),
+  onProfile: (callback) => subscribe('fixture:profile', callback),
   onConversation: (callback) => subscribe('fixture:conversation', callback),
   onMemoryCleared: (callback) => subscribe('fixture:memory-cleared', callback),
 });

@@ -1,8 +1,8 @@
 import net from 'node:net';
 
 const endpoint = process.platform === 'win32'
-  ? '\\\\.\\pipe\\codex-avatars-v1'
-  : '/tmp/codex-avatars-v1.sock';
+  ? '\\\\.\\pipe\\nova-fox-companion-v1'
+  : '/tmp/nova-fox-companion-v1.sock';
 
 const sessionId = `manual-demo-${Date.now()}`;
 const events = [
@@ -17,6 +17,6 @@ socket.on('connect', () => {
   socket.end();
 });
 socket.on('error', (error) => {
-  process.stderr.write(`Codex Avatars is not listening: ${error.message}\n`);
+  process.stderr.write(`Nova Fox Companion is not listening: ${error.message}\n`);
   process.exitCode = 1;
 });

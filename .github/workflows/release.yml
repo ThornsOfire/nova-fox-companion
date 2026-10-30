@@ -29,14 +29,14 @@ jobs:
           $version = $env:GITHUB_REF_NAME -replace '^v', ''
           $installer = Get-ChildItem -LiteralPath dist -Filter '*.exe' | Select-Object -First 1
           if (-not $installer) { throw 'Windows installer was not produced.' }
-          $expectedName = "Codex Avatars-Setup-$version.exe"
+          $expectedName = "Nova Fox Companion-Setup-$version.exe"
           if ($installer.Name -ne $expectedName) {
             Move-Item -LiteralPath $installer.FullName -Destination (Join-Path $installer.DirectoryName $expectedName)
           }
       - name: Package Git and plugin bundle
         shell: pwsh
         run: |
-          $name = "Codex-Avatars-Plugin-$env:GITHUB_REF_NAME.zip"
+          $name = "Nova-Fox-Companion-Plugin-$env:GITHUB_REF_NAME.zip"
           git archive --format=zip --output="dist/$name" HEAD
       - name: Generate checksums
         shell: pwsh
@@ -47,7 +47,7 @@ jobs:
           } | Set-Content -Encoding ascii dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: codex-avatars-windows
+          name: nova-fox-companion-windows
           path: |
             dist/*.exe
             dist/*.zip
@@ -63,15 +63,3 @@ jobs:
             dist/*.yml
             dist/*.blockmap
             dist/SHA256SUMS.txt
-      - name: Upload a legacy-compatible installer asset
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          $version = $env:GITHUB_REF_NAME -replace '^v', ''
-          $installer = Get-ChildItem -LiteralPath dist -Filter '*.exe' | Select-Object -First 1
-          if (-not $installer) { throw 'Windows installer was not produced.' }
-          $compatibilityPath = Join-Path $env:RUNNER_TEMP "Codex Avatars-Setup-$version.exe"
-          Copy-Item -LiteralPath $installer.FullName -Destination $compatibilityPath -Force
-          gh release upload $env:GITHUB_REF_NAME $compatibilityPath --clobber

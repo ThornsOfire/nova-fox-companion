@@ -30,12 +30,12 @@ function buildFeedbackUrl({ kind, version, language = 'en' }) {
 function feedbackBody({ kind, version, french }) {
   if (kind === 'bug') {
     return french
-      ? `### Problème rencontré\n\nDécrivez clairement le problème.\n\n### Étapes pour le reproduire\n\n1. \n2. \n3. \n\n### Résultat attendu\n\n\n### Environnement\n\n- Codex Avatars : ${version}\n- Version de Windows : \n- Nombre et disposition des écrans : \n\n### Captures ou journaux utiles\n\nAjoutez uniquement des informations ne contenant aucun secret ni donnée personnelle.`
-      : `### What happened?\n\nDescribe the problem clearly.\n\n### Steps to reproduce\n\n1. \n2. \n3. \n\n### Expected behavior\n\n\n### Environment\n\n- Codex Avatars: ${version}\n- Windows version: \n- Display count and layout: \n\n### Helpful screenshots or logs\n\nInclude only information that contains no secrets or personal data.`;
+      ? `### Problème rencontré\n\nDécrivez clairement le problème.\n\n### Étapes pour le reproduire\n\n1. \n2. \n3. \n\n### Résultat attendu\n\n\n### Environnement\n\n- Nova Fox Companion : ${version}\n- Version de Windows : \n- Nombre et disposition des écrans : \n\n### Captures ou journaux utiles\n\nAjoutez uniquement des informations ne contenant aucun secret ni donnée personnelle.`
+      : `### What happened?\n\nDescribe the problem clearly.\n\n### Steps to reproduce\n\n1. \n2. \n3. \n\n### Expected behavior\n\n\n### Environment\n\n- Nova Fox Companion: ${version}\n- Windows version: \n- Display count and layout: \n\n### Helpful screenshots or logs\n\nInclude only information that contains no secrets or personal data.`;
   }
   return french
-    ? `### Suggestion\n\nDécrivez l’amélioration souhaitée.\n\n### Problème ou besoin\n\nQuel usage cette suggestion faciliterait-elle ?\n\n### Fonctionnement proposé\n\nComment devrait-elle fonctionner dans Codex Avatars ?\n\n### Informations complémentaires\n\n- Codex Avatars : ${version}`
-    : `### Suggestion\n\nDescribe the improvement you would like.\n\n### Problem or need\n\nWhat workflow would this suggestion improve?\n\n### Proposed behavior\n\nHow should it work in Codex Avatars?\n\n### Additional context\n\n- Codex Avatars: ${version}`;
+    ? `### Suggestion\n\nDécrivez l’amélioration souhaitée.\n\n### Problème ou besoin\n\nQuel usage cette suggestion faciliterait-elle ?\n\n### Fonctionnement proposé\n\nComment devrait-elle fonctionner dans Nova Fox Companion ?\n\n### Informations complémentaires\n\n- Nova Fox Companion : ${version}`
+    : `### Suggestion\n\nDescribe the improvement you would like.\n\n### Problem or need\n\nWhat workflow would this suggestion improve?\n\n### Proposed behavior\n\nHow should it work in Nova Fox Companion?\n\n### Additional context\n\n- Nova Fox Companion: ${version}`;
 }
 
 function reportText(value, maximum) {
@@ -88,8 +88,8 @@ function buildPetReportUrl({ pet, reason, details, version, language = 'en' }) {
   url.searchParams.set('title', `[Pet report] ${name} (${slug})`);
   url.searchParams.set('labels', 'pet-report');
   url.searchParams.set('body', french
-    ? `### Pet signalé\n\n- Nom : ${name}\n- Identifiant catalogue : \`${slug}\`\n- Dépôt source : \`${repository}\`\n- Révision source : \`${ref}\`\n- Fichiers publics : ${sourceUrl}\n\n### Motif\n\n${reportReason(reason, true)}\n\n### Détails\n\n${explanation}\n\n### Informations\n\n- Rapport préparé dans Codex Avatars ${safeVersion}\n- Ce rapport est public. Retirez toute donnée personnelle ou secrète avant de l’envoyer.`
-    : `### Reported Pet\n\n- Name: ${name}\n- Catalog id: \`${slug}\`\n- Source repository: \`${repository}\`\n- Source revision: \`${ref}\`\n- Public files: ${sourceUrl}\n\n### Reason\n\n${reportReason(reason, false)}\n\n### Details\n\n${explanation}\n\n### Information\n\n- Report prepared in Codex Avatars ${safeVersion}\n- This report is public. Remove any personal or secret information before submitting it.`);
+    ? `### Pet signalé\n\n- Nom : ${name}\n- Identifiant catalogue : \`${slug}\`\n- Dépôt source : \`${repository}\`\n- Révision source : \`${ref}\`\n- Fichiers publics : ${sourceUrl}\n\n### Motif\n\n${reportReason(reason, true)}\n\n### Détails\n\n${explanation}\n\n### Informations\n\n- Rapport préparé dans Nova Fox Companion ${safeVersion}\n- Ce rapport est public. Retirez toute donnée personnelle ou secrète avant de l’envoyer.`
+    : `### Reported Pet\n\n- Name: ${name}\n- Catalog id: \`${slug}\`\n- Source repository: \`${repository}\`\n- Source revision: \`${ref}\`\n- Public files: ${sourceUrl}\n\n### Reason\n\n${reportReason(reason, false)}\n\n### Details\n\n${explanation}\n\n### Information\n\n- Report prepared in Nova Fox Companion ${safeVersion}\n- This report is public. Remove any personal or secret information before submitting it.`);
   return url.toString();
 }
 

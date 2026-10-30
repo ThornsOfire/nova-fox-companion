@@ -60,7 +60,7 @@ function applySelection() {
     detail.textContent = copy.small;
     return;
   }
-  void window.codexAvatars.completeZoneSelection(selection);
+  void window.novaFoxCompanion.completeZoneSelection(selection);
 }
 
 window.addEventListener('pointerdown', (event) => {
@@ -87,9 +87,9 @@ window.addEventListener('pointerup', (event) => {
 });
 
 window.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') void window.codexAvatars.cancelZoneSelection();
+  if (event.key === 'Escape') void window.novaFoxCompanion.cancelZoneSelection();
   if (event.key === 'Enter') applySelection();
 });
 
 document.querySelector('#apply').addEventListener('click', applySelection);
-document.querySelector('#cancel').addEventListener('click', () => void window.codexAvatars.cancelZoneSelection());
+document.querySelector('#cancel').addEventListener('click', () => void window.novaFoxCompanion.cancelZoneSelection());

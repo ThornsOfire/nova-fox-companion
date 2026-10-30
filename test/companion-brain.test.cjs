@@ -113,13 +113,13 @@ test('stale replies and cancelled requests do not emit or enter memory', async (
 
 test('conversation and personal notes survive restart, clear together, and bound history', async (t) => {
   const f = await fixture(t);
-  await f.memory.notes('My name is Robbie. I make music.');
+  await f.memory.notes('My name is Alex. I make music.');
   await f.brain.generate(null, 'I love Cubase.');
   const memory = new CompanionMemory(f.memory.file, storage);
   assert.equal((await memory.read()).turns[0].text, 'I love Cubase.');
   f.advance(60000);
   await f.brain.generate(null, 'What DAW do I like?');
-  assert.match(f.calls[1].memory.notes, /Robbie/);
+  assert.match(f.calls[1].memory.notes, /Alex/);
   assert.equal(f.calls[1].memory.turns[0].text, 'I love Cubase.');
   const full = { notes: '', turns: Array.from({ length: 100 }, () => ({ role: 'assistant', text: 'Old quip' })) };
   await memory.write(full);
@@ -127,7 +127,7 @@ test('conversation and personal notes survive restart, clear together, and bound
   assert.equal((await memory.read()).turns.length, 100);
   assert.equal((await memory.read()).turns.at(-1).text, 'Newest reply');
   await memory.clear();
-  assert.deepEqual(await memory.read(), { notes: '', turns: [] });
+  assert.deepEqual(await memory.read(), { notes: '', turns: [], preferredName: null });
 });
 
 test('corrupt usage ledger fails closed', async (t) => {
@@ -166,18 +166,18 @@ test('Pacific midnight resets the durable budget', async (t) => {
 test('provider sends chosen model and explicit memory only, and validates bounded JSON', async () => {
   let captured;
   const result = await requestReaction({ key: 'fake', status: 'idle', personality: 'dry', language: 'en',
-    model: 'gpt-6.1-terra', memory: { notes: 'Robbie', turns: [] }, chat: 'Hello',
+    model: 'gpt-6.1-terra', memory: { notes: 'Alex', turns: [] }, chat: 'Hello',
     fetchImpl: async (url, options) => {
       assert.equal(url, 'https://api.openai.com/v1/responses');
       assert.equal(options.redirect, 'error');
       captured = JSON.parse(options.body);
       return { ok: true, json: async () => ({ status: 'completed', output: [{ type: 'message',
-        content: [{ type: 'output_text', text: JSON.stringify({ quip: 'Hello, Robbie.', mood: 'amused' }) }] }] }) };
+        content: [{ type: 'output_text', text: JSON.stringify({ quip: 'Hello, Alex.', mood: 'amused' }) }] }] }) };
     } });
   assert.equal(captured.model, 'gpt-6.1-terra');
   assert.equal(captured.store, false);
-  assert.equal(JSON.parse(captured.input).notes, 'Robbie');
-  assert.equal(result.quip, 'Hello, Robbie.');
+  assert.equal(JSON.parse(captured.input).notes, 'Alex');
+  assert.equal(result.quip, 'Hello, Alex.');
   assert.throws(() => validateReaction({ quip: 'x'.repeat(181), mood: 'amused' }));
   assert.throws(() => validateReaction({ quip: '<script>', mood: 'amused' }));
   assert.throws(() => validateReaction({ quip: 'Hi', mood: 'unknown' }));
@@ -191,4 +191,22 @@ test('model and personality settings reject arbitrary values and retain limits',
   assert.equal(value.companionPersonality, 'playful');
   assert.equal(value.companionCooldownSeconds, 20);
   assert.equal(value.companionDailyRequests, 500);
+});
+
+
+test('first meeting introduces Nova before asking and remembers only the chosen name', async (t) => {
+  const f = await fixture(t);
+  assert.equal((await f.memory.read()).preferredName, null);
+  const result = await f.memory.setPreferredName('Call me Alex');
+  assert.equal(result.preferredName, 'Alex');
+  const restarted = new CompanionMemory(f.memory.file, storage);
+  const saved = await restarted.read();
+  assert.match(saved.turns[0].text, /I’m Nova.*What should I call you/);
+  assert.equal(saved.preferredName, 'Alex');
+  await Promise.all([f.memory.notes('Enjoys music'), f.memory.setPreferredName('Zoë')]);
+  assert.equal((await f.memory.read()).preferredName, 'Zoë');
+  assert.equal((await f.memory.read()).notes, 'Enjoys music');
+  await assert.rejects(f.memory.setPreferredName('<bad>'));
+  await f.memory.clear();
+  assert.equal((await restarted.read()).preferredName, null);
 });

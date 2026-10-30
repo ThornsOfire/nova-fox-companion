@@ -113,7 +113,7 @@ test('generates source notes for independent work and requires reuse details whe
 });
 
 test('prepares exactly three valid V2 files without modifying the local Pet', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-submit-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-submit-'));
   const manifestPath = path.join(root, 'pet.json');
   const spritesheetPath = path.join(root, 'spritesheet.webp');
   await fs.writeFile(manifestPath, JSON.stringify({
@@ -130,7 +130,7 @@ test('prepares exactly three valid V2 files without modifying the local Pet', as
 });
 
 test('rejects spritesheets that exceed the upstream pull-request budget', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-submit-large-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-submit-large-'));
   const manifestPath = path.join(root, 'pet.json');
   const spritesheetPath = path.join(root, 'spritesheet.webp');
   await fs.writeFile(manifestPath, JSON.stringify({ id: 'large', description: 'Large.', spriteVersionNumber: 2 }));
@@ -142,7 +142,7 @@ test('rejects spritesheets that exceed the upstream pull-request budget', async 
 });
 
 test('refuses to publish files that resolve outside the selected Pet directory', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-submit-escape-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-submit-escape-'));
   const petDirectory = path.join(root, 'pet');
   const outsideDirectory = path.join(root, 'outside');
   await fs.mkdir(petDirectory);
@@ -221,7 +221,7 @@ test('publishes three blobs to the user fork and opens one ready pull request', 
   ]);
   const pull = calls.find((call) => call.endpoint.endsWith('/pulls'));
   assert.equal(pull.body.draft, false);
-  assert.equal(pull.body.head.startsWith('friendly-user:codex-avatars/submit-spookie-'), true);
+  assert.equal(pull.body.head.startsWith('friendly-user:nova-fox-companion/submit-spookie-'), true);
   assert.match(pull.body.body, /No Codex generation or review credits/);
 });
 
@@ -261,7 +261,7 @@ test('publishes directly to the controlled fork when its owner is connected', as
   assert.equal(result.url, 'https://github.com/Kajdrak2/awesome-codex-pet/pull/43');
   assert.equal(calls.some((call) => call.endpoint === '/repos/Kajdrak2/awesome-codex-pet/forks'), false);
   const pull = calls.find((call) => call.endpoint.endsWith('/pulls'));
-  assert.equal(pull.body.head.startsWith('codex-avatars/submit-spookie-'), true);
+  assert.equal(pull.body.head.startsWith('nova-fox-companion/submit-spookie-'), true);
   assert.equal(pull.body.head.includes(':'), false);
 });
 
@@ -269,7 +269,7 @@ test('updates the newest matching open pull request instead of creating a duplic
   const calls = [];
   let blobIndex = 0;
   const hex = (character) => character.repeat(40);
-  const existingBranch = 'codex-avatars/submit-spookie-20260809155839';
+  const existingBranch = 'nova-fox-companion/submit-spookie-20260809155839';
   const github = {
     async api(method, endpoint, body) {
       calls.push({ method, endpoint, body });
@@ -281,7 +281,7 @@ test('updates the newest matching open pull request instead of creating a duplic
             html_url: 'https://github.com/Kajdrak2/awesome-codex-pet/pull/2',
             body: 'Adds the Codex Pet v2 package `spookie--kajdrak2`.',
             base: { ref: 'main' },
-            head: { ref: 'codex-avatars/submit-spookie-20260809151133', sha: hex('e'), repo: { full_name: 'Kajdrak2/awesome-codex-pet' } },
+            head: { ref: 'nova-fox-companion/submit-spookie-20260809151133', sha: hex('e'), repo: { full_name: 'Kajdrak2/awesome-codex-pet' } },
           },
           {
             number: 3,

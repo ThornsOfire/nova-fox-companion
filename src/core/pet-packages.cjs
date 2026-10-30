@@ -105,7 +105,7 @@ async function installPetBuffers(manifestBuffer, spritesheetBuffer, petRoot, opt
   const destination = options.collision === 'reject'
     ? await strictDestination(petRoot, requestedId)
     : await availableDestination(petRoot, requestedId);
-  const stagingPath = path.join(petRoot, `.codex-avatars-import-${randomUUID()}`);
+  const stagingPath = path.join(petRoot, `.nova-fox-companion-import-${randomUUID()}`);
   let committed = false;
   try {
     await fs.mkdir(stagingPath);

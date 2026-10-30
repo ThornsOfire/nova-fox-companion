@@ -31,15 +31,16 @@ function hookCommand(scriptPath) {
 function isOurHandler(handler) {
   if (!handler || typeof handler !== 'object') return false;
   return [handler.command, handler.commandWindows, handler.command_windows]
-    .some((value) => typeof value === 'string' && value.includes(HOOK_MARKER));
+    .some((value) => typeof value === 'string' && new RegExp(`(?:^|[^A-Za-z0-9_])${HOOK_MARKER}(?:$|[^A-Za-z0-9_])`).test(value));
 }
 
 function withoutOurHandlers(groups) {
-  if (!Array.isArray(groups)) return [];
+  if (!Array.isArray(groups)) throw new Error('Unsupported hook groups; leaving the configuration unchanged.');
 
   return groups.flatMap((group) => {
-    if (!group || typeof group !== 'object') return [];
-    const handlers = Array.isArray(group.hooks) ? group.hooks.filter((hook) => !isOurHandler(hook)) : [];
+    if (!group || typeof group !== 'object' || !Array.isArray(group.hooks)) return [group];
+    const handlers = group.hooks.filter((hook) => !isOurHandler(hook));
+    if (handlers.length === group.hooks.length) return [group];
     return handlers.length ? [{ ...group, hooks: handlers }] : [];
   });
 }
@@ -49,13 +50,16 @@ function mergeHooksConfig(existing, scriptPath) {
     ? structuredClone(existing)
     : {};
   next.description ||= 'User lifecycle hooks for Codex.';
+  if (next.hooks !== undefined && (!next.hooks || typeof next.hooks !== 'object' || Array.isArray(next.hooks))) {
+    throw new Error('Unsupported hooks configuration; leaving it unchanged.');
+  }
   next.hooks = next.hooks && typeof next.hooks === 'object' && !Array.isArray(next.hooks)
     ? next.hooks
     : {};
 
   const command = hookCommand(scriptPath);
   for (const [eventName, matcher] of EVENTS) {
-    const groups = withoutOurHandlers(next.hooks[eventName]);
+    const groups = withoutOurHandlers(next.hooks[eventName] === undefined ? [] : next.hooks[eventName]);
     const group = {
       ...(matcher ? { matcher } : {}),
       hooks: [{
@@ -78,7 +82,7 @@ function removeHooksConfig(existing) {
   if (!next.hooks || typeof next.hooks !== 'object' || Array.isArray(next.hooks)) return next;
 
   for (const eventName of Object.keys(next.hooks)) {
-    const groups = withoutOurHandlers(next.hooks[eventName]);
+    const groups = withoutOurHandlers(next.hooks[eventName] === undefined ? [] : next.hooks[eventName]);
     if (groups.length) next.hooks[eventName] = groups;
     else delete next.hooks[eventName];
   }

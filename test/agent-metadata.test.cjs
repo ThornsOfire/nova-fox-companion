@@ -24,7 +24,7 @@ test('turns collaboration task paths into useful labels', () => {
 });
 
 test('extracts only task, model, and effort metadata from a local rollout', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-metadata-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-metadata-'));
   const day = path.join(root, '2026', '08', '08');
   const id = '019fe0d3-3d8e-7001-909f-941e3f0a945e';
   await fs.mkdir(day, { recursive: true });
@@ -41,7 +41,7 @@ test('extracts only task, model, and effort metadata from a local rollout', asyn
 });
 
 test('hydrates recently active roots and subagents without waiting for another hook', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-recent-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-recent-'));
   const day = path.join(root, '2026', '08', '08');
   const sessionId = '019fe0d3-3d8e-7001-909f-941e3f0a945e';
   const agentId = '019fe0d3-3d8e-7001-909f-941e3f0a945f';
@@ -68,7 +68,7 @@ test('hydrates recently active roots and subagents without waiting for another h
 });
 
 test('reconciles two concurrently working root tasks and observes completion from rollout state', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-activity-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-activity-'));
   const day = path.join(root, '2026', '08', '09');
   const first = '019fd6b6-6e4f-71f0-a2ad-e46cc2f08757';
   const second = '019fe095-b10e-7832-8d14-f2dd72119b40';
@@ -125,7 +125,7 @@ test('classifies aborted turns as idle without letting trailing token counts wak
 });
 
 test('refreshes metadata from the latest turn context instead of keeping the creation context', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-latest-metadata-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-latest-metadata-'));
   const day = path.join(root, '2026', '08', '08');
   const id = '019fe0d3-3d8e-7001-909f-941e3f0a945f';
   const rollout = path.join(day, `rollout-test-${id}.jsonl`);
@@ -147,7 +147,7 @@ test('refreshes metadata from the latest turn context instead of keeping the cre
 });
 
 test('labels a main agent from the local Codex task-title index', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-root-metadata-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-root-metadata-'));
   const sessions = path.join(root, 'sessions');
   const day = path.join(sessions, '2026', '08', '08');
   const id = '019fd6b6-6e4f-71f0-a2ad-e46cc2f08757';
@@ -155,7 +155,7 @@ test('labels a main agent from the local Codex task-title index', async () => {
   await fs.mkdir(day, { recursive: true });
   await fs.writeFile(indexPath, [
     JSON.stringify({ id: 'different-task', thread_name: 'Ignore me' }),
-    JSON.stringify({ id, thread_name: '  Continue   Codex Avatars  ' }),
+    JSON.stringify({ id, thread_name: '  Continue   Nova Fox Companion  ' }),
   ].join('\n'));
   await fs.writeFile(path.join(day, `rollout-test-${id}.jsonl`), [
     JSON.stringify({ type: 'session_meta', payload: { id, secret: 'ignored' } }),
@@ -163,19 +163,19 @@ test('labels a main agent from the local Codex task-title index', async () => {
   ].join('\n'));
   const resolver = new AgentMetadataResolver(sessions, { retryDelays: [0] });
   assert.deepEqual(await resolver.resolve(id, { isRoot: true }), {
-    label: 'Continue Codex Avatars', nickname: null, model: 'gpt-5.6-sol', effort: 'high',
+    label: 'Continue Nova Fox Companion', nickname: null, model: 'gpt-5.6-sol', effort: 'high',
   });
-  assert.equal(await readThreadName(indexPath, id), 'Continue Codex Avatars');
-  await fs.appendFile(indexPath, `\n${JSON.stringify({ id, thread_name: 'Codex Avatars' })}`);
-  assert.equal((await resolver.resolve(id, { isRoot: true })).label, 'Continue Codex Avatars');
-  assert.equal((await resolver.refreshThreadNames([id])).get(id), 'Codex Avatars');
-  assert.equal((await resolver.resolve(id, { isRoot: true })).label, 'Codex Avatars');
+  assert.equal(await readThreadName(indexPath, id), 'Continue Nova Fox Companion');
+  await fs.appendFile(indexPath, `\n${JSON.stringify({ id, thread_name: 'Nova Fox Companion' })}`);
+  assert.equal((await resolver.resolve(id, { isRoot: true })).label, 'Continue Nova Fox Companion');
+  assert.equal((await resolver.refreshThreadNames([id])).get(id), 'Nova Fox Companion');
+  assert.equal((await resolver.resolve(id, { isRoot: true })).label, 'Nova Fox Companion');
   assert.equal(safeThreadName('  A\n task  '), 'A task');
   await fs.rm(root, { recursive: true, force: true });
 });
 
 test('reads the latest valid titles for multiple tasks in one pass', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-title-index-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-title-index-'));
   const indexPath = path.join(root, 'session_index.jsonl');
   const first = '019fd6b6-6e4f-71f0-a2ad-e46cc2f08757';
   const second = '019fd6b6-6e4f-71f0-a2ad-e46cc2f08758';
@@ -233,7 +233,7 @@ test('title monitor coalesces a burst, keeps the newest read, and stops cleanly'
 });
 
 test('title monitor observes an appended Codex rename without a lifecycle event', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-title-monitor-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-title-monitor-'));
   const indexPath = path.join(root, 'session_index.jsonl');
   const id = '019fd6b6-6e4f-71f0-a2ad-e46cc2f08757';
   await fs.writeFile(indexPath, JSON.stringify({ id, thread_name: 'Original title' }));

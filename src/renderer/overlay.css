@@ -14,7 +14,10 @@
   line-height: 1.45;
   white-space: normal;
   box-shadow: 0 6px 20px rgb(0 0 0 / 25%);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
 }
 
 .companion-bubble[hidden] { display: none; }
@@ -60,7 +63,7 @@ body {
   user-select: none;
 }
 
-.sprite-art { position: absolute; background-repeat: no-repeat; }
+.sprite-art { position: absolute; background-repeat: no-repeat; clip-path: inset(.5px); }
 .nova-ember { position: absolute; left: 66%; top: 72%; width: 14%; height: 12%; border-radius: 50%;
   background: radial-gradient(ellipse, #ffcb753d, #ff85051a 45%, transparent 75%);
   box-shadow: 0 0 10px #ff920a30; pointer-events: none; animation: ember-breathe 3.2s ease-in-out infinite; }
@@ -267,3 +270,8 @@ body.is-reduced-motion .sprite {
   animation: none !important;
   transition: none !important;
 }
+
+/* Canvas coordinates are physical pixels; preserve readable controls on scaled displays. */
+.companion-bubble { font-size: calc(13px * var(--interaction-scale, 1)); }
+.companion-chat { font-size: calc(12px * var(--interaction-scale, 1)); }
+.companion-spirit { top: calc(-42px * var(--interaction-scale, 1)); transform: scale(var(--interaction-scale, 1)); transform-origin: center bottom; }

@@ -30,18 +30,46 @@
     "appId": "dev.novafoxcompanion.desktop",
     "productName": "Nova Fox Companion",
     "asar": true,
-    "directories": { "output": "dist" },
-    "files": ["src/**/*", "assets/**/*", "package.json"],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
     "extraResources": [
-      { "from": "scripts/codex-hook.ps1", "to": "hooks/codex-hook.ps1" },
-      { "from": "scripts/desktop-sensor.ps1", "to": "hooks/desktop-sensor.ps1" },
-      { "from": "scripts/capture-window.ps1", "to": "hooks/capture-window.ps1" },
-      { "from": ".agents", "to": "integration/.agents" },
-      { "from": "plugins", "to": "integration/plugins" }
+      {
+        "from": "scripts/codex-hook.ps1",
+        "to": "hooks/codex-hook.ps1"
+      },
+      {
+        "from": "scripts/desktop-sensor.ps1",
+        "to": "hooks/desktop-sensor.ps1"
+      },
+      {
+        "from": "scripts/capture-window.ps1",
+        "to": "hooks/capture-window.ps1"
+      },
+      {
+        "from": ".agents",
+        "to": "integration/.agents"
+      },
+      {
+        "from": "plugins",
+        "to": "integration/plugins"
+      }
     ],
     "win": {
       "icon": "assets/icon.png",
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "nsis": {
@@ -59,6 +87,7 @@
     "electron-builder": "26.15.3"
   },
   "dependencies": {
-    "adm-zip": "^0.6.0"
+    "adm-zip": "^0.6.0",
+    "ws": "^8.22.0"
   }
 }

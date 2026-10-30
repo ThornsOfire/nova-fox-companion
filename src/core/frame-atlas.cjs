@@ -16,7 +16,10 @@ function validateFrameAtlas(value) {
       return { x: frame.x, y: frame.y, width: frame.width, height: frame.height, duration: frame.duration };
     });
   }
-  return { format: value.format, width: value.width, height: value.height, animations };
+  const referenceWidth = value.referenceWidth || Math.max(...Object.values(animations).flat().map(f => f.width));
+  const referenceHeight = value.referenceHeight || Math.max(...Object.values(animations).flat().map(f => f.height));
+  if (![referenceWidth, referenceHeight].every(n => Number.isInteger(n) && n > 0 && n <= 4096)) throw new Error('Invalid frame reference size');
+  return { format: value.format, width: value.width, height: value.height, referenceWidth, referenceHeight, animations };
 }
 async function readPngDimensions(file) {
   const handle = await fs.open(file, 'r');

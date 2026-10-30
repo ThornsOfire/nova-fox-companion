@@ -12,7 +12,7 @@ const {
 test('resolves the bundled marketplace from the packaged resources directory', () => {
   const options = {
     isPackaged: true,
-    resourcesPath: 'C:\\Program Files\\Codex Avatars\\resources',
+    resourcesPath: 'C:\\Program Files\\Nova Fox Companion\\resources',
     appPath: 'C:\\source',
   };
 
@@ -27,12 +27,12 @@ test('resolves the bundled marketplace from the packaged resources directory', (
 });
 
 test('builds a Codex deeplink without losing spaces or Windows separators', () => {
-  const source = 'C:\\Program Files\\Codex Avatars\\resources\\integration\\.agents\\plugins\\marketplace.json';
+  const source = 'C:\\Program Files\\Nova Fox Companion\\resources\\integration\\.agents\\plugins\\marketplace.json';
   const url = new URL(pluginDeepLink(source));
 
   assert.equal(url.protocol, 'codex:');
   assert.equal(url.hostname, 'plugins');
-  assert.equal(url.pathname, '/codex-avatars');
+  assert.equal(url.pathname, '/nova-fox-companion');
   assert.equal(url.searchParams.get('marketplacePath'), path.resolve(source));
   assert.equal(url.searchParams.has('mode'), false);
 });

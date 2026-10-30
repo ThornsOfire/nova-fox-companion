@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping make Codex Avatars better.
+Thanks for helping make Nova Fox Companion better.
 
 1. Open an issue before a large behavior or protocol change.
 2. Keep hook payloads metadata-only. Never add prompt, transcript, source-code, tool-input, or tool-output forwarding.

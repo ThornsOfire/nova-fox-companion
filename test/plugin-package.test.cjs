@@ -6,14 +6,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
-const pluginRoot = path.join(root, 'plugins', 'codex-avatars');
+const pluginRoot = path.join(root, 'plugins', 'nova-fox-companion');
 
 test('repo marketplace and plugin identifiers match', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(pluginRoot, '.codex-plugin', 'plugin.json')));
   const marketplace = JSON.parse(fs.readFileSync(path.join(root, '.agents', 'plugins', 'marketplace.json')));
   const entry = marketplace.plugins.find((plugin) => plugin.name === manifest.name);
   assert.ok(entry);
-  assert.equal(entry.source.path, './plugins/codex-avatars');
+  assert.equal(entry.source.path, './plugins/nova-fox-companion');
   const packageManifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json')));
   assert.equal(manifest.version.split('+')[0], packageManifest.version);
   assert.match(manifest.version, /\+codex\.[a-z0-9-]+$/);
@@ -35,14 +35,14 @@ test('plugin bundles every lifecycle hook and the privacy-minimized bridge', () 
     .flatMap((groups) => groups)
     .flatMap((group) => group.hooks)
     .map((hook) => hook.command);
-  assert.ok(commands.every((command) => command.includes('CODEX_AVATARS_HOOK_V1')));
+  assert.ok(commands.every((command) => command.includes('NOVA_FOX_COMPANION_HOOK_V1')));
   const pluginBridge = fs.readFileSync(path.join(pluginRoot, 'scripts', 'codex-hook.ps1'), 'utf8');
   const sourceBridge = fs.readFileSync(path.join(root, 'scripts', 'codex-hook.ps1'), 'utf8');
   assert.equal(pluginBridge, sourceBridge);
 });
 
 test('avatar creation skill starts a durable goal before Hatch Pet', () => {
-  const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'create-codex-avatar', 'SKILL.md'), 'utf8');
+  const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'create-nova-fox-companion', 'SKILL.md'), 'utf8');
   assert.match(skill, /Start the task with `\/goal` before invoking `\$hatch-pet`/);
   assert.match(skill, /failed visual or blind-direction QA requires repair and continuation/);
 });

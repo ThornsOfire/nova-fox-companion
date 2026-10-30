@@ -1,6 +1,6 @@
 'use strict';
 
-const api = window.codexAvatars;
+const api = window.novaFoxCompanion;
 
 const translations = {
   en: {
@@ -56,15 +56,15 @@ const translations = {
     localPackagesTitle: 'Local packages and portable sharing', localPackagesCopy: 'Import a V2 .codexpet file or open the folder used by Codex and the overlay.',
     importPet: 'Import a Pet package', openFolder: 'Open library folder',
     galleryHelp: 'Use Share on any Pet card to export a .codexpet file. Imports are validated and never overwrite an existing Pet.',
-    submissionTitle: 'Submit one of your Pets', submissionCopy: 'Validate and publish a finished local V2 Pet directly from Codex Avatars—without opening Codex. Green submissions publish automatically.',
+    submissionTitle: 'Submit one of your Pets', submissionCopy: 'Validate and publish a finished local V2 Pet directly from Nova Fox Companion—without opening Codex. Green submissions publish automatically.',
     submissionPetLabel: 'Local Pet to submit', submissionChoosePet: 'Choose a local V2 Pet', submitMarketplacePet: 'Submit with GitHub', openSubmissionGuide: 'Submission guide',
     submissionNote: 'A GitHub account is required to publish a Pet. No Codex credits are used, and no maintainer approval is required after green CI.',
     submissionMissing: 'Choose a local V2 Pet first.', submissionError: 'The Pet could not be submitted.', submissionSuccess: (url) => `Submission ready for automatic CI publication${url ? `: ${url}` : '.'}`,
     submissionDialogEyebrow: 'Direct contribution', submissionDialogTitle: 'Review and submit your Pet',
-    submissionDialogCopy: 'Codex Avatars validates the local package, checks catalog duplicates, and prepares exactly three public files. After your GitHub confirmation, a green pull request is published automatically.',
+    submissionDialogCopy: 'Nova Fox Companion validates the local package, checks catalog duplicates, and prepares exactly three public files. After your GitHub confirmation, a green pull request is published automatically.',
     submissionPreviewContract: 'Native V2 · 1536 × 2288', submissionPreviewHelp: 'Review the complete atlas here before confirming every visual-quality item.',
     submissionGithubTitle: 'GitHub connection', githubChecking: 'Checking GitHub…', githubDisconnected: 'Not connected', githubConnected: (login) => `Connected as @${login}`,
-    connectGithub: 'Connect GitHub', openGithub: 'Open GitHub', githubPreparing: 'Preparing a one-time code…', githubWaitingApproval: 'Waiting for approval on GitHub…', githubConnecting: 'Connecting…', githubConnectionCancelled: 'GitHub connection cancelled.', githubRequired: 'GitHub is required because the community catalog accepts Pets through public pull requests. On first use, the app opens GitHub in your browser so you can sign in or create an account. The official GitHub CLI stores the authorization; Codex Avatars never reads your token.',
+    connectGithub: 'Connect GitHub', openGithub: 'Open GitHub', githubPreparing: 'Preparing a one-time code…', githubWaitingApproval: 'Waiting for approval on GitHub…', githubConnecting: 'Connecting…', githubConnectionCancelled: 'GitHub connection cancelled.', githubRequired: 'GitHub is required because the community catalog accepts Pets through public pull requests. On first use, the app opens GitHub in your browser so you can sign in or create an account. The official GitHub CLI stores the authorization; Nova Fox Companion never reads your token.',
     githubDeviceCodeLabel: 'Enter this code on GitHub', githubDeviceCodeHelp: 'The code is already copied to your clipboard and expires shortly.', copyGithubCode: 'Copy code', githubCodeCopied: 'GitHub code copied.',
     submissionName: 'Pet name', submissionSlug: 'Catalog Pet id', submissionAuthor: 'Author or handle', submissionCategory: 'Primary category',
     submissionSourceType: 'How the final asset was made', submissionCanonical: 'Canonical character or concept key',
@@ -105,7 +105,7 @@ const translations = {
     customHelp: 'A full-screen selector will let you drag the desired rectangle.', pickZone: 'Select on screen',
     integrationEyebrow: 'Integration', integrationTitle: 'Codex plugin + lifecycle hooks',
     integrationCopy: 'The overlay works locally. Enabling the plugin adds the creation skill and lets Codex activity animate each companion.',
-    stepPlugin: 'Install or enable the Codex Avatars plugin.', stepTrust: 'Review and trust its lifecycle hooks; they send only event ids and non-sensitive metadata.',
+    stepPlugin: 'Install or enable the Nova Fox Companion plugin.', stepTrust: 'Review and trust its lifecycle hooks; they send only event ids and non-sensitive metadata.',
     stepCreate: 'Create a Pet with the form above, then it appears in the local library automatically.',
     openPlugin: 'Open plugin in Codex', enableHooks: 'Enable standalone hooks', disableHooks: 'Disable standalone hooks', docs: 'Pets documentation',
     runDemo: 'Run demo', stopDemo: 'Stop demo', pluginOpened: 'Codex is open. Enable the plugin, then review its hooks.',
@@ -181,15 +181,15 @@ const translations = {
     localPackagesTitle: 'Packages locaux et partage portable', localPackagesCopy: 'Importez un fichier .codexpet V2 ou ouvrez le dossier utilisé par Codex et l’overlay.',
     importPet: 'Importer un package Pet', openFolder: 'Ouvrir le dossier',
     galleryHelp: 'Utilisez Partager sur une carte pour exporter un fichier .codexpet. Les imports sont validés et n’écrasent jamais un Pet existant.',
-    submissionTitle: 'Soumettre l’un de vos Pets', submissionCopy: 'Validez et publiez un Pet V2 local terminé directement depuis Codex Avatars, sans ouvrir Codex. Les soumissions vertes sont publiées automatiquement.',
+    submissionTitle: 'Soumettre l’un de vos Pets', submissionCopy: 'Validez et publiez un Pet V2 local terminé directement depuis Nova Fox Companion, sans ouvrir Codex. Les soumissions vertes sont publiées automatiquement.',
     submissionPetLabel: 'Pet local à soumettre', submissionChoosePet: 'Choisir un Pet V2 local', submitMarketplacePet: 'Soumettre avec GitHub', openSubmissionGuide: 'Guide de soumission',
     submissionNote: 'Un compte GitHub est requis pour publier un Pet. Aucun crédit Codex ni validation manuelle du mainteneur ne sont nécessaires après une CI verte.',
     submissionMissing: 'Choisissez d’abord un Pet V2 local.', submissionError: 'Le Pet n’a pas pu être soumis.', submissionSuccess: (url) => `Soumission prête pour la publication automatique par la CI${url ? ` : ${url}` : '.'}`,
     submissionDialogEyebrow: 'Contribution directe', submissionDialogTitle: 'Vérifier et soumettre votre Pet',
-    submissionDialogCopy: 'Codex Avatars valide le package local, contrôle les doublons du catalogue et prépare exactement trois fichiers publics. Après votre confirmation GitHub, une pull request verte est publiée automatiquement.',
+    submissionDialogCopy: 'Nova Fox Companion valide le package local, contrôle les doublons du catalogue et prépare exactement trois fichiers publics. Après votre confirmation GitHub, une pull request verte est publiée automatiquement.',
     submissionPreviewContract: 'V2 natif · 1536 × 2288', submissionPreviewHelp: 'Examinez ici l’atlas complet avant de confirmer chaque point de qualité visuelle.',
     submissionGithubTitle: 'Connexion GitHub', githubChecking: 'Vérification de GitHub…', githubDisconnected: 'Non connecté', githubConnected: (login) => `Connecté en tant que @${login}`,
-    connectGithub: 'Connecter GitHub', openGithub: 'Ouvrir GitHub', githubPreparing: 'Préparation du code à usage unique…', githubWaitingApproval: 'En attente de validation sur GitHub…', githubConnecting: 'Connexion…', githubConnectionCancelled: 'Connexion GitHub annulée.', githubRequired: 'GitHub est requis car le catalogue communautaire reçoit les Pets via des pull requests publiques. Lors de la première utilisation, l’application ouvre GitHub dans votre navigateur pour vous connecter ou créer un compte. GitHub CLI conserve l’autorisation ; Codex Avatars ne lit jamais votre jeton.',
+    connectGithub: 'Connecter GitHub', openGithub: 'Ouvrir GitHub', githubPreparing: 'Préparation du code à usage unique…', githubWaitingApproval: 'En attente de validation sur GitHub…', githubConnecting: 'Connexion…', githubConnectionCancelled: 'Connexion GitHub annulée.', githubRequired: 'GitHub est requis car le catalogue communautaire reçoit les Pets via des pull requests publiques. Lors de la première utilisation, l’application ouvre GitHub dans votre navigateur pour vous connecter ou créer un compte. GitHub CLI conserve l’autorisation ; Nova Fox Companion ne lit jamais votre jeton.',
     githubDeviceCodeLabel: 'Saisissez ce code sur GitHub', githubDeviceCodeHelp: 'Le code est déjà copié dans le presse-papiers et expire rapidement.', copyGithubCode: 'Copier le code', githubCodeCopied: 'Code GitHub copié.',
     submissionName: 'Nom du Pet', submissionSlug: 'Identifiant du Pet dans le catalogue', submissionAuthor: 'Auteur ou pseudo', submissionCategory: 'Catégorie principale',
     submissionSourceType: 'Comment l’asset final a été créé', submissionCanonical: 'Clé canonique du personnage ou concept',
@@ -230,7 +230,7 @@ const translations = {
     customHelp: 'Un sélecteur plein écran vous permettra de tracer le rectangle souhaité.', pickZone: 'Sélectionner à l’écran',
     integrationEyebrow: 'Intégration', integrationTitle: 'Plugin Codex + hooks de cycle de vie',
     integrationCopy: 'L’overlay fonctionne localement. Activer le plugin ajoute la compétence de création et permet à l’activité Codex d’animer chaque compagnon.',
-    stepPlugin: 'Installez ou activez le plugin Codex Avatars.', stepTrust: 'Examinez et approuvez ses hooks ; ils ne transmettent que les identifiants d’événements et des métadonnées non sensibles.',
+    stepPlugin: 'Installez ou activez le plugin Nova Fox Companion.', stepTrust: 'Examinez et approuvez ses hooks ; ils ne transmettent que les identifiants d’événements et des métadonnées non sensibles.',
     stepCreate: 'Créez un Pet avec le formulaire ci-dessus : il apparaît ensuite automatiquement dans la bibliothèque locale.',
     openPlugin: 'Ouvrir le plugin dans Codex', enableHooks: 'Activer les hooks autonomes', disableHooks: 'Désactiver les hooks autonomes', docs: 'Documentation Pets',
     runDemo: 'Lancer la démo', stopDemo: 'Arrêter la démo', pluginOpened: 'Codex est ouvert. Activez le plugin, puis examinez ses hooks.',
@@ -303,7 +303,7 @@ let lastSuggestedCanonicalKey = '';
 let lastAutomaticSubmissionAuthor = '';
 let selectedSubmissionAvatar = null;
 let selectedReportPet = null;
-const SUBMISSION_AUTHOR_STORAGE_KEY = 'codex-avatars.marketplace-author';
+const SUBMISSION_AUTHOR_STORAGE_KEY = 'nova-fox-companion.marketplace-author';
 const MARKETPLACE_REPORT_REASONS = ['copyright', 'inappropriate', 'duplicate', 'broken', 'impersonation', 'other'];
 
 function c() { return translations[settings?.language === 'fr' ? 'fr' : 'en']; }
@@ -1255,8 +1255,10 @@ document.querySelector('#onboarding-plugin-button').addEventListener('click', as
   const result = await api.openPlugin(); showToast(result.opened ? c().pluginOpened : c().pluginUnavailable);
 });
 elements.hooksButton.addEventListener('click', async () => {
-  const result = hooksInstalled ? await api.uninstallHooks() : await api.installHooks();
-  hooksInstalled = result.installed; localize(); renderSettings(); showToast(hooksInstalled ? c().hooksOn : c().hooksOff);
+  try {
+    const result = hooksInstalled ? await api.uninstallHooks() : await api.installHooks();
+    hooksInstalled = result.installed; localize(); renderSettings(); showToast(hooksInstalled ? c().hooksOn : c().hooksOff);
+  } catch (error) { showToast(error.message || 'Could not update Nova hooks. Check the Codex connection panel.'); }
 });
 elements.onboardingBack.addEventListener('click', () => { onboardingStep = Math.max(0, onboardingStep - 1); renderOnboarding(); });
 elements.onboardingNext.addEventListener('click', async () => {
@@ -1267,7 +1269,7 @@ elements.onboardingNext.addEventListener('click', async () => {
 document.querySelector('#onboarding-close').addEventListener('click', () => elements.onboarding.close());
 
 api.onState(updateActiveCount);
-api.onSettings((value) => { settings = value.settings; displays = value.displays; localize(); renderSettings(); });
+api.onSettings((value) => { void api.hooksStatus().then((result) => { hooksInstalled = result.installed; renderSettings(); }).catch(() => {}); settings = value.settings; displays = value.displays; localize(); renderSettings(); });
 api.onLibrary((value) => { avatars = value.avatars || []; renderAvatarGrid(); renderMarketplace(); });
 api.onDemo((value) => { demoRunning = Boolean(value.running); localize(); renderSettings(); });
 api.onMarketplaceSubmissionProgress((value) => {

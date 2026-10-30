@@ -1,6 +1,6 @@
-# Codex Avatars
+# Nova Fox Companion
 
-Codex Avatars donne un compagnon animé indépendant à la tâche principale et à chaque sous-agent Codex. Les personnages utilisent le format natif des Pets Codex v2 et se déplacent directement sur un ou plusieurs écrans, sans dock, panneau coloré ni fond visible.
+Nova Fox Companion donne un compagnon animé indépendant à la tâche principale et à chaque sous-agent Codex. Les personnages utilisent le format natif des Pets Codex v2 et se déplacent directement sur un ou plusieurs écrans, sans dock, panneau coloré ni fond visible.
 
 > État du projet : la version `0.7.2` est publiée sur GitHub. Elle corrige le faux échec de **Démarrer avec Windows** observé avec Electron 43, vérifie l’état réel du démarrage Windows et remplace les anciennes entrées en double par une seule inscription canonique. Elle inclut aussi le marketplace externe de Pets V2, la publication automatique après une CI protégée, le signalement public des Pets depuis l’application, la soumission directe via GitHub, la réconciliation continue des tâches multiples, des aperçus fiables pour les Pets propres au fork et le retour guidé décrits plus bas. L’installeur n’est pas encore signé.
 
@@ -19,7 +19,7 @@ Codex Avatars donne un compagnon animé indépendant à la tâche principale et 
 - Affichage facultatif des agents récemment au repos ou terminés sous forme de Pets endormis et immobiles pendant 30 minutes maximum.
 - Les événements de fin reçus en retard ne peuvent plus faire réapparaître un avatar endormi expiré.
 - Formulaire de création personnalisé ouvrant une tâche Codex avec le prompt déjà préparé.
-- Parcours, recherche, aperçu et installation directe des Pets V2 dédupliqués du fork contrôlé Codex Avatars et du catalogue original Awesome Codex Pet.
+- Parcours, recherche, aperçu et installation directe des Pets V2 dédupliqués du fork contrôlé Nova Fox Companion et du catalogue original Awesome Codex Pet.
 - Validation et soumission directe d’un Pet V2 local au catalogue via GitHub, sans consommer de crédits Codex.
 - Signalement d’un Pet publié depuis sa carte du marketplace au moyen d’une issue GitHub publique préremplie.
 - Ouverture directe d’un signalement de bug ou d’une suggestion GitHub guidée, avec la version installée préremplie.
@@ -37,9 +37,9 @@ Le dessin sur le bureau est donc assuré par un petit processus Electron local. 
 
 ## Installation simple — recommandée
 
-1. Ouvre la [dernière release de Codex Avatars](https://github.com/Kajdrak2/Codex-avatars/releases/latest), télécharge le fichier Windows `.exe` sous **Assets**, puis lance-le.
+1. Ouvre la [dernière release de Nova Fox Companion](https://github.com/ThornsOfire/nova-fox-companion/releases/latest), télécharge le fichier Windows `.exe` sous **Assets**, puis lance-le.
 2. Ouvre l’installeur et termine l’assistant.
-3. Dans la page Codex qui s’ouvre, installe **Codex Avatars** et vérifie ses hooks.
+3. Dans la page Codex qui s’ouvre, installe **Nova Fox Companion** et vérifie ses hooks.
 
 L’installeur place le compagnon dans le profil Windows, active immédiatement les hooks locaux, embarque le marketplace et le plugin, enregistre le chemin exact du renderer et ouvre les réglages. La confirmation finale dans Codex reste volontaire : un installeur ne doit pas accepter des hooks de sécurité à la place de l’utilisateur.
 
@@ -52,8 +52,8 @@ Lorsqu’une release GitHub plus récente est disponible, le compagnon propose d
 Prérequis : Windows 10/11, Node.js 22 ou plus récent et une version actuelle de l’application de bureau ChatGPT avec Codex.
 
 ```powershell
-git clone https://github.com/Kajdrak2/Codex-avatars.git codex-avatars
-cd codex-avatars
+git clone https://github.com/ThornsOfire/nova-fox-companion.git nova-fox-companion
+cd nova-fox-companion
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
@@ -61,11 +61,11 @@ Le script :
 
 1. installe exactement les dépendances verrouillées avec `npm ci` ;
 2. déclare ce checkout comme marketplace Codex local ;
-3. tente d’installer le plugin `codex-avatars@codex-avatars-local` ;
+3. tente d’installer le plugin `nova-fox-companion@nova-fox-companion-local` ;
 4. enregistre le chemin du renderer source pour les futurs démarrages ;
 5. lance le compagnon en arrière-plan.
 
-Ensuite, redémarre ChatGPT, ouvre **Plugins**, choisis **Codex Avatars Local**, active **Codex Avatars** et vérifie ses hooks lorsque Codex le demande. Les hooks non gérés sont volontairement soumis à cette validation de confiance.
+Ensuite, redémarre ChatGPT, ouvre **Plugins**, choisis **Nova Fox Companion Local**, active **Nova Fox Companion** et vérifie ses hooks lorsque Codex le demande. Les hooks non gérés sont volontairement soumis à cette validation de confiance.
 
 Prévisualiser sans rien modifier :
 
@@ -75,7 +75,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -WhatIf
 
 ## Utilisation
 
-L’overlay n’a volontairement aucun panneau. Ouvre les réglages depuis l’icône **Codex Avatars** dans la zone de notification Windows.
+L’overlay n’a volontairement aucun panneau. Ouvre les réglages depuis l’icône **Nova Fox Companion** dans la zone de notification Windows.
 
 - **Mode passif** : tous les clics traversent l’overlay. `Ctrl+Alt+A` permet toujours de le basculer.
 - **Désactiver les avatars** : masque l’overlay tout en gardant le processus et l’état des agents prêts ; le même bouton ou l’action de zone de notification le restaure immédiatement.
@@ -87,13 +87,13 @@ L’overlay n’a volontairement aucun panneau. Ouvre les réglages depuis l’i
 
 ## Marketplace communautaire V2
 
-Les réglages fusionnent le [fork de catalogue contrôlé par Codex Avatars](https://github.com/Kajdrak2/awesome-codex-pet) avec le catalogue original [Awesome Codex Pet](https://github.com/legeling/awesome-codex-pet). Le fork est prioritaire : un identifiant identique ou une spritesheet strictement identique n’apparaît qu’une fois, tandis que des assets d’empreintes différentes restent disponibles comme vraies variantes. Les nouveaux Pets présents uniquement dans l’original restent donc visibles sans dupliquer les entrées miroirs. Codex Avatars n’affiche que les entrées V2 natives (`1536x2288`, 8 colonnes × 11 lignes), avec recherche et filtres par catégorie. Chaque source possède son propre cache validé ; l’indisponibilité de l’une ne bloque ni l’autre catalogue, ni les Pets locaux, ni l’overlay.
+Les réglages fusionnent le [fork de catalogue contrôlé par Nova Fox Companion](https://github.com/Kajdrak2/awesome-codex-pet) avec le catalogue original [Awesome Codex Pet](https://github.com/legeling/awesome-codex-pet). Le fork est prioritaire : un identifiant identique ou une spritesheet strictement identique n’apparaît qu’une fois, tandis que des assets d’empreintes différentes restent disponibles comme vraies variantes. Les nouveaux Pets présents uniquement dans l’original restent donc visibles sans dupliquer les entrées miroirs. Nova Fox Companion n’affiche que les entrées V2 natives (`1536x2288`, 8 colonnes × 11 lignes), avec recherche et filtres par catégorie. Chaque source possède son propre cache validé ; l’indisponibilité de l’une ne bloque ni l’autre catalogue, ni les Pets locaux, ni l’overlay.
 
 Le bouton **Installer** télécharge uniquement `pet.json` et `spritesheet.webp` depuis le dépôt source autorisé du Pet. L’application vérifie les tailles et SHA-256 déclarés, le manifeste V2 et les dimensions de l’atlas, installe les deux fichiers de façon atomique et refuse d’écraser un autre Pet local portant le même identifiant. Elle n’exécute jamais les scripts shell des catalogues.
 
 Pour contribuer, sélectionne un Pet V2 local terminé dans **Soumettre l’un de vos Pets**, puis **Soumettre avec GitHub**. Un compte GitHub est obligatoire car le catalogue reçoit les contributions sous forme de pull requests publiques ; Codex ne s’ouvre pas et aucun crédit Codex n’est utilisé. Le formulaire intégré affiche l’atlas final, valide les dimensions V2 et la limite amont de 5 Mo, contrôle les identifiants, clés canoniques, noms et empreintes exactes, puis recueille auteur, catégorie, type de source, conditions non commerciales et confirmations explicites de revue visuelle. Pour un Pet original ou généré indépendamment, les notes de source sont créées automatiquement ; le champ de réutilisation/attribution n’apparaît que si le type de source exige des précisions.
 
-La première connexion utilise le parcours navigateur de l’outil officiel GitHub CLI. Codex Avatars réutilise d’abord une session GitHub CLI fonctionnelle lorsqu’elle existe déjà. Sinon, l’application télécharge une version Windows épinglée depuis la release officielle `cli/cli`, vérifie les SHA-256 de l’archive et de l’exécutable, attend le code temporaire, le copie puis ouvre GitHub afin que l’utilisateur se connecte ou crée un compte. **Ouvrir GitHub** reste disponible pendant l’autorisation et l’annulation ne bloque jamais la fenêtre de soumission. GitHub CLI gère les identifiants ; Codex Avatars retire les jetons d’environnement ambiants et ne lit jamais de jeton. Le login GitHub connecté devient l’auteur proposé par défaut et est mémorisé localement. La clé canonique apparaît immédiatement depuis la catégorie et l’identifiant du Pet, inclut l’auteur pour les personnages originaux et reste modifiable. Après une confirmation native séparée, l’application crée directement une branche quand le compte connecté contrôle `Kajdrak2/awesome-codex-pet` ; les autres contributeurs utilisent un fork existant ou nouvellement créé dans le même réseau. Elle enregistre exactement `submission.json`, `pet.json` et `spritesheet.webp` avec le format JSON Prettier exigé par le catalogue. Si le même Pet possède déjà une soumission ouverte, Codex Avatars met à jour la pull request correspondante la plus récente au lieu d’en créer une autre ; sinon, l’application ouvre une pull request prête pour revue vers le catalogue contrôlé. Une soumission ciblée n’est publiée automatiquement qu’après la réussite du workflow protégé pour son commit exact. Un Pet déjà publié peut être signalé depuis sa carte : l’application prépare une issue GitHub publique et l’utilisateur garde la main sur son envoi final. Les deux catalogues et chaque Pet conservent leurs auteurs et conditions de licence.
+La première connexion utilise le parcours navigateur de l’outil officiel GitHub CLI. Nova Fox Companion réutilise d’abord une session GitHub CLI fonctionnelle lorsqu’elle existe déjà. Sinon, l’application télécharge une version Windows épinglée depuis la release officielle `cli/cli`, vérifie les SHA-256 de l’archive et de l’exécutable, attend le code temporaire, le copie puis ouvre GitHub afin que l’utilisateur se connecte ou crée un compte. **Ouvrir GitHub** reste disponible pendant l’autorisation et l’annulation ne bloque jamais la fenêtre de soumission. GitHub CLI gère les identifiants ; Nova Fox Companion retire les jetons d’environnement ambiants et ne lit jamais de jeton. Le login GitHub connecté devient l’auteur proposé par défaut et est mémorisé localement. La clé canonique apparaît immédiatement depuis la catégorie et l’identifiant du Pet, inclut l’auteur pour les personnages originaux et reste modifiable. Après une confirmation native séparée, l’application crée directement une branche quand le compte connecté contrôle `Kajdrak2/awesome-codex-pet` ; les autres contributeurs utilisent un fork existant ou nouvellement créé dans le même réseau. Elle enregistre exactement `submission.json`, `pet.json` et `spritesheet.webp` avec le format JSON Prettier exigé par le catalogue. Si le même Pet possède déjà une soumission ouverte, Nova Fox Companion met à jour la pull request correspondante la plus récente au lieu d’en créer une autre ; sinon, l’application ouvre une pull request prête pour revue vers le catalogue contrôlé. Une soumission ciblée n’est publiée automatiquement qu’après la réussite du workflow protégé pour son commit exact. Un Pet déjà publié peut être signalé depuis sa carte : l’application prépare une issue GitHub publique et l’utilisateur garde la main sur son envoi final. Les deux catalogues et chaque Pet conservent leurs auteurs et conditions de licence.
 
 ## Créer un avatar depuis Work ou Codex
 
@@ -109,7 +109,7 @@ Le hook ne copie que : nom de l’événement, identifiants de session/tour/agen
 
 Comme les hooks ne publient pas encore les titres de tâche, le nom de tâche de collaboration, le modèle ou l’effort, le compagnon lit le titre principal dans l’index local `session_index.jsonl` et surveille cet index pour détecter les renommages, puis corrèle `agent_id` avec le rollout correspondant et n’en extrait que `agent_path`, `model` et `effort`. Aucun contenu de conversation n’est recopié dans son état ou ses réglages.
 
-Les événements passent par le canal local `codex-avatars-v1`. Aucun serveur TCP ni service distant n’est utilisé.
+Les événements passent par le canal local `nova-fox-companion-v1`. Aucun serveur TCP ni service distant n’est utilisé.
 
 La consultation du marketplace, l’installation de Pets, la vérification des mises à jour, la soumission GitHub directe et l’ouverture d’un signalement public de Pet sont les fonctions réseau sortantes facultatives. Le processus principal récupère les deux manifestes publics, les aperçus depuis `codexpet.top` et les fichiers du Pet choisi uniquement depuis des chemins fixes de `Kajdrak2/awesome-codex-pet` ou `legeling/awesome-codex-pet`. La soumission utilise un téléchargement GitHub CLI officiel fixe et des endpoints API ciblant le fork contrôlé après autorisation navigateur et confirmation explicite. Un signalement ouvre une URL d’issue GitHub fixe qui contient uniquement le motif choisi, l’explication bornée écrite par l’utilisateur, la version de l’application et les métadonnées publiques vérifiées du catalogue ; l’utilisateur l’envoie ensuite sur GitHub. Le renderer sandboxé conserve `connect-src 'none'` et ne reçoit que des métadonnées bornées, des URL d’images locales, l’état de connexion et la progression.
 

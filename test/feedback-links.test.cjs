@@ -21,7 +21,7 @@ test('builds only fixed GitHub feedback URLs with a guided draft', () => {
   assert.equal(url.pathname, '/ThornsOfire/nova-fox-companion/issues/new');
   assert.equal(url.searchParams.get('labels'), 'bug');
   assert.match(url.searchParams.get('title'), /^\[Bug\]/);
-  assert.match(url.searchParams.get('body'), /Codex Avatars: 0\.7\.0-beta\.7/);
+  assert.match(url.searchParams.get('body'), /Nova Fox Companion: 0\.7\.0-beta\.7/);
   assert.match(url.searchParams.get('body'), /Steps to reproduce/);
   assert.throws(() => buildFeedbackUrl({ kind: 'other', version: '1.0.0' }), /Unsupported feedback type/);
 });
@@ -67,7 +67,7 @@ test('builds a fixed public Pet report from trusted catalog metadata', () => {
   assert.match(url.searchParams.get('title'), /^\[Pet report\] Minuit/);
   assert.match(url.searchParams.get('body'), /Catalog id: `minuit--kajdrak2`/);
   assert.match(url.searchParams.get('body'), /Copyright or attribution concern/);
-  assert.match(url.searchParams.get('body'), /Codex Avatars 0\.7\.0-beta\.11/);
+  assert.match(url.searchParams.get('body'), /Nova Fox Companion 0\.7\.0-beta\.11/);
 });
 
 test('localizes Pet reports and rejects untrusted or incomplete payloads', () => {
@@ -116,8 +116,8 @@ test('wires an in-app Pet report dialog through the restricted main-process brid
   assert.match(markup, /id="marketplace-report-dialog"/);
   assert.match(markup, /name="details"[^>]+minlength="10"[^>]+maxlength="2000"/);
   assert.match(renderer, /api\.reportMarketplacePet\(selectedReportPet\.slug/);
-  assert.match(preload, /reportMarketplacePet: \(slug, payload\) => ipcRenderer\.invoke\('avatars:report-marketplace-pet'/);
+  assert.match(preload, /reportMarketplacePet: \(slug, payload\) => ipcRenderer\.invoke\('nova:report-marketplace-pet'/);
   assert.match(main, /safeCatalogSlug\(rawSlug\)/);
   assert.match(main, /buildPetReportUrl\(\{/);
-  assert.match(main, /ipcMain\.handle\('avatars:report-marketplace-pet'/);
+  assert.match(main, /ipcMain\.handle\('nova:report-marketplace-pet'/);
 });

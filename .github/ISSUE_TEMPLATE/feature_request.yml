@@ -1,12 +1,12 @@
 name: Feature suggestion
-description: Suggest an improvement for Codex Avatars
+description: Suggest an improvement for Nova Fox Companion
 title: "[Suggestion] "
 labels:
   - enhancement
 body:
   - type: markdown
     attributes:
-      value: Thanks for sharing an idea for Codex Avatars.
+      value: Thanks for sharing an idea for Nova Fox Companion.
   - type: textarea
     id: suggestion
     attributes:
@@ -25,7 +25,7 @@ body:
     id: behavior
     attributes:
       label: Proposed behavior
-      description: How should it work in Codex Avatars?
+      description: How should it work in Nova Fox Companion?
   - type: textarea
     id: context
     attributes:

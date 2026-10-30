@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Codex Avatar"
+  short_description: "Create a polished Nova Fox Companion companion"
+  default_prompt: "Use $create-nova-fox-companion and explicitly invoke $hatch-pet to create a new animated companion for Nova Fox Companion."

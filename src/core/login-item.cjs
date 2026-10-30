@@ -3,9 +3,9 @@
 const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 
-const LOGIN_ITEM_NAME = 'dev.codexavatars.desktop';
+const LOGIN_ITEM_NAME = 'dev.novafoxcompanion.desktop';
 const LOGIN_ITEM_ARGS = Object.freeze(['--background']);
-const LEGACY_LOGIN_ITEM_NAMES = Object.freeze(['Codex Avatars']);
+const LEGACY_LOGIN_ITEM_NAMES = Object.freeze(['Nova Fox Companion']);
 const RUN_REGISTRY_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
 const STARTUP_APPROVED_REGISTRY_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run';
 

@@ -39,7 +39,7 @@ test('rejects oversized GitHub CLI downloads before installation', async () => {
 test('uses a verified CLI session for JSON API calls without exposing a token', async () => {
   const calls = [];
   const cli = new GitHubCli({
-    toolDirectory: path.join(os.tmpdir(), 'codex-avatars-gh-test'),
+    toolDirectory: path.join(os.tmpdir(), 'nova-fox-companion-gh-test'),
     environment: { PATH: '', GH_TOKEN: 'ghp_123456789012345678901234567890' },
     processRunner: async (executable, args, options) => {
       calls.push({ executable, args, options });
@@ -61,7 +61,7 @@ test('browser login reports the device code and returns the authenticated accoun
   const loginInput = [];
   let loginCall = null;
   const cli = new GitHubCli({
-    toolDirectory: path.join(os.tmpdir(), 'codex-avatars-gh-login-test'),
+    toolDirectory: path.join(os.tmpdir(), 'nova-fox-companion-gh-login-test'),
     environment: { PATH: '' },
     processRunner: async (_executable, args, options) => {
       if (args[0] === 'api') {
@@ -123,7 +123,7 @@ test('cancels the first managed CLI download instead of leaving connection pendi
   const controller = new AbortController();
   let observedSignal = null;
   const cli = new GitHubCli({
-    toolDirectory: path.join(os.tmpdir(), 'codex-avatars-gh-download-cancel-test'),
+    toolDirectory: path.join(os.tmpdir(), 'nova-fox-companion-gh-download-cancel-test'),
     environment: { PATH: '' },
     platform: 'win32',
     fetchImpl: async (_url, options) => {

@@ -1,6 +1,6 @@
 param(
-    [string]$Marker = "CODEX_AVATARS_HOOK_V1",
-    [string]$PipeName = "codex-avatars-v1",
+    [string]$Marker = "NOVA_FOX_COMPANION_HOOK_V1",
+    [string]$PipeName = "nova-fox-companion-v1",
     [string]$CompanionPath = "",
     [string]$DevRoot = "",
     [string]$PluginData = ""
@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Send-CodexAvatarEvent {
+function Send-NovaFoxCompanionEvent {
     param([string]$Json)
 
     try {
@@ -31,19 +31,19 @@ function Send-CodexAvatarEvent {
     }
 }
 
-function Start-CodexAvatarCompanion {
+function Start-NovaFoxCompanionCompanion {
     $candidates = [System.Collections.Generic.List[string]]::new()
     if (-not [string]::IsNullOrWhiteSpace($CompanionPath)) {
         $candidates.Add($CompanionPath)
     }
-    if (-not [string]::IsNullOrWhiteSpace($env:CODEX_AVATARS_APP)) {
-        $candidates.Add($env:CODEX_AVATARS_APP)
+    if (-not [string]::IsNullOrWhiteSpace($env:NOVA_FOX_COMPANION_APP)) {
+        $candidates.Add($env:NOVA_FOX_COMPANION_APP)
     }
 
-    $bundledCandidate = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..\Codex Avatars.exe"))
+    $bundledCandidate = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..\Nova Fox Companion.exe"))
     $candidates.Add($bundledCandidate)
     if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
-        $candidates.Add((Join-Path $env:LOCALAPPDATA "Programs\Codex Avatars\Codex Avatars.exe"))
+        $candidates.Add((Join-Path $env:LOCALAPPDATA "Programs\Nova Fox Companion\Nova Fox Companion.exe"))
     }
 
     foreach ($candidate in $candidates) {
@@ -65,7 +65,7 @@ function Start-CodexAvatarCompanion {
         }
     }
     if ([string]::IsNullOrWhiteSpace($developmentRoot) -or -not (Test-Path -LiteralPath (Join-Path $developmentRoot "package.json") -PathType Leaf)) {
-        $developmentRoot = $env:CODEX_AVATARS_DEV_ROOT
+        $developmentRoot = $env:NOVA_FOX_COMPANION_DEV_ROOT
     }
 
     if (-not [string]::IsNullOrWhiteSpace($developmentRoot)) {
@@ -92,7 +92,11 @@ try {
     }
 
     $source = $rawPayload | ConvertFrom-Json
-    $safePayload = [ordered]@{}
+    $codexDataHome = $env:CODEX_HOME
+    if ([string]::IsNullOrWhiteSpace($codexDataHome)) {
+        $codexDataHome = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex'
+    }
+    $safePayload = [ordered]@{ codex_home = [System.IO.Path]::GetFullPath($codexDataHome) }
     foreach ($property in @(
         "hook_event_name",
         "session_id",
@@ -118,14 +122,14 @@ try {
     }
 
     $json = $safePayload | ConvertTo-Json -Compress -Depth 4
-    if (Send-CodexAvatarEvent -Json $json) {
+    if (Send-NovaFoxCompanionEvent -Json $json) {
         exit 0
     }
 
-    if (Start-CodexAvatarCompanion) {
+    if (Start-NovaFoxCompanionCompanion) {
         for ($attempt = 0; $attempt -lt 32; $attempt += 1) {
             Start-Sleep -Milliseconds 75
-            if (Send-CodexAvatarEvent -Json $json) {
+            if (Send-NovaFoxCompanionEvent -Json $json) {
                 exit 0
             }
         }

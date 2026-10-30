@@ -4,11 +4,12 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { resolveCodexHome } = require('../src/core/codex-home.cjs');
 const { createEventServer } = require('../src/core/pipe-server.cjs');
 
 test('PowerShell hook forwards only allowlisted metadata', { skip: process.platform !== 'win32' }, async (context) => {
   const received = [];
-  const pipeName = `codex-avatars-powershell-test-${process.pid}-${Date.now()}`;
+  const pipeName = `nova-fox-companion-powershell-test-${process.pid}-${Date.now()}`;
   const server = createEventServer((payload) => received.push(payload), { pipeName });
   await server.listen();
   context.after(() => server.close());
@@ -46,6 +47,7 @@ test('PowerShell hook forwards only allowlisted metadata', { skip: process.platf
   assert.equal(await exit, 0);
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.deepEqual(received, [{
+    codex_home: resolveCodexHome().path,
     hook_event_name: 'SubagentStart',
     session_id: 'session-safe',
     turn_id: 'turn-safe',

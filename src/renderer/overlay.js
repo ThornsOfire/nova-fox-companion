@@ -1,14 +1,17 @@
 'use strict';
 
-const api = window.codexAvatars;
+const api = window.novaFoxCompanion;
 const world = document.querySelector('#world');
-const topology = window.CodexAvatarTopology;
-const labelLayout = window.CodexAvatarLabelLayout.labelLayout;
-const assignAvatars = window.CodexAvatarAssignment.assignAvatars;
+const topology = window.NovaFoxCompanionTopology;
+const labelLayout = window.NovaFoxCompanionLabelLayout.labelLayout;
+const assignAvatars = window.NovaFoxCompanionAssignment.assignAvatars;
 const actors = new Map();
 const reactions = new window.NovaCompanion.CompanionReactions();
 const voice = new window.NovaCompanionVoice.CompanionVoice({
   synthesis: window.speechSynthesis,
+  requestSpeech: (message) => api.speakQuip(message),
+  createAudio: (source) => new Audio(source),
+  onError: (text) => { if (chatActor) chatActor.chat.querySelector('.chat-status').textContent = text; },
   createUtterance: (text) => new SpeechSynthesisUtterance(text),
 });
 const animations = {
@@ -36,6 +39,19 @@ let dragOffset = { x: 0, y: 0 };
 let desktop = null;
 let chatActor = null;
 let latestMessage = null;
+let awaitingName = false;
+let firstIntroduction = null;
+function renderNameState(actor) {
+  actor.chatInput.placeholder = awaitingName ? 'What should I call you?' : 'Talk to Nova…';
+  actor.chatInput.setAttribute('aria-label', awaitingName ? 'Your preferred name' : 'Message Nova');
+  actor.chatSend.textContent = awaitingName ? 'Save name' : 'Send';
+}
+function showIntroduction(text) {
+  awaitingName = true;
+  firstIntroduction = { id: 'nova:introduction', text, source: 'nova', expiresAt: Number.MAX_SAFE_INTEGER, silent: true };
+  remember(firstIntroduction);
+  for (const actor of actors.values()) renderNameState(actor);
+}
 const history = [];
 const historyIds = new Set();
 let lastPlayRemark = -Infinity;
@@ -114,17 +130,22 @@ function viewportZones() {
     const y = Math.max(0, rectangle.y);
     const right = Math.min(window.innerWidth, rectangle.x + rectangle.width);
     const bottom = Math.min(window.innerHeight, rectangle.y + rectangle.height);
-    return { x, y, width: right - x, height: bottom - y };
+    return { x, y, width: right - x, height: bottom - y, monitorBounds: rectangle.monitorBounds, monitorScale: rectangle.monitorScale || 1 };
   }).filter((rectangle) => rectangle.width >= 72 && rectangle.height >= 72);
   return visible.length > 0
     ? visible
     : [{ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight }];
 }
 
+function actorScale(agent) {
+  const actor = actors.get(agent?.id);
+  return viewportZones()[actor?.zoneIndex || 0]?.monitorScale || 1;
+}
+
 function avatarSizeFor(agent) {
-  return agent?.isRoot
+  return actorScale(agent) * (agent?.isRoot
     ? (settings?.mainAvatarSize || 118)
-    : (settings?.subagentAvatarSize || 118);
+    : (settings?.subagentAvatarSize || 118));
 }
 
 function detailsFor(agent) {
@@ -193,7 +214,7 @@ function activateNextWaypoint(actor) {
   actor.targetY = waypoint.y;
   actor.targetZoneIndex = waypoint.zoneIndex;
   actor.transition = waypoint.transition || null;
-  actor.targetAt = performance.now() + 3_000 + nextRandom(actor) * 6_000;
+  actor.targetAt = performance.now() + Math.hypot(actor.targetX - actor.x, actor.targetY - actor.y) / Math.max(1, actor.speed * .5) * 1000 + 5000 + nextRandom(actor) * 3000;
   return true;
 }
 
@@ -224,7 +245,7 @@ function chooseTarget(actor, options = {}) {
     actor.y = target.y;
     actor.targetX = target.x;
     actor.targetY = target.y;
-    actor.targetAt = performance.now() + 3_000 + nextRandom(actor) * 6_000;
+    actor.targetAt = performance.now() + Math.hypot(actor.targetX - actor.x, actor.targetY - actor.y) / Math.max(1, actor.speed * .5) * 1000 + 5000 + nextRandom(actor) * 3000;
     return;
   }
 
@@ -233,7 +254,7 @@ function chooseTarget(actor, options = {}) {
     actor.targetX = target.x;
     actor.targetY = target.y;
     actor.targetZoneIndex = actor.zoneIndex;
-    actor.targetAt = performance.now() + 3_000 + nextRandom(actor) * 6_000;
+    actor.targetAt = performance.now() + Math.hypot(actor.targetX - actor.x, actor.targetY - actor.y) / Math.max(1, actor.speed * .5) * 1000 + 5000 + nextRandom(actor) * 3000;
     return;
   }
 
@@ -266,7 +287,7 @@ function flattenAgents() {
     const status = peers.some((agent) => agent.status === 'attention') ? 'attention'
       : peers.some((agent) => agent.status === 'working') ? 'working' : 'idle';
     return [{ id: 'nova-resident', sessionId: 'nova-resident', label: 'Nova',
-      isRoot: true, status, type: 'main', project: 'Nova Companion' }];
+      isRoot: true, status, type: 'main', project: 'Nova Fox Companion' }];
   }
   const agents = (snapshot.sessions || []).flatMap((session) => session.agents.map((agent) => ({
     ...agent,
@@ -298,9 +319,11 @@ function createActor(agent, avatar, index) {
   const labelDetail = document.createElement('small');
   labelDetail.className = 'agent-detail';
   label.append(labelName, labelDetail);
-  const bubble = document.createElement('span');
+  const bubble = document.createElement('button');
+  bubble.type = 'button';
+  bubble.setAttribute('aria-label', 'Open Nova conversation');
   bubble.className = 'companion-bubble';
-  bubble.setAttribute('role', 'status');
+  bubble.setAttribute('aria-live', 'polite');
   bubble.hidden = true;
   const mute = document.createElement('button');
   mute.className = 'companion-mute';
@@ -323,7 +346,7 @@ function createActor(agent, avatar, index) {
   const form = document.createElement('form'); form.className = 'companion-chat-line';
   const input = document.createElement('input'); input.maxLength = 500;
   input.placeholder = 'Talk to Nova…'; input.setAttribute('aria-label', 'Message Nova');
-  const send = document.createElement('button'); send.type = 'submit'; send.textContent = 'Send';
+  const send = document.createElement('button'); send.type = 'submit'; send.textContent = awaitingName ? 'Save name' : 'Send';
   form.append(input, send);
   const controls = document.createElement('div'); controls.className = 'spirit-controls';
   const settingsButton = document.createElement('button'); settingsButton.type = 'button'; settingsButton.textContent = 'Settings';
@@ -332,22 +355,35 @@ function createActor(agent, avatar, index) {
   settingsButton.addEventListener('click', () => { closeChat(); void api.openSettings(); });
   fullChat.addEventListener('click', () => { closeChat(); void api.openFullChat(); });
   dismiss.addEventListener('click', closeChat);
-  controls.append(fullChat, settingsButton, mute, dismiss);
+  const hide = document.createElement('button'); hide.type='button'; hide.textContent='Hide Nova';
+  hide.addEventListener('click', () => { closeChat(); void api.hideCompanion(); });
+  controls.append(fullChat, settingsButton, mute, hide, dismiss);
   const chatStatus = document.createElement('span'); chatStatus.className = 'chat-status'; chatStatus.setAttribute('role', 'status');
   chat.append(historyLog, form, controls, chatStatus);
   chat.addEventListener('pointerdown', (event) => event.stopPropagation());
-  spirit.addEventListener('pointerdown', (event) => event.stopPropagation());
-  spirit.addEventListener('click', async () => {
-    if (chatActor?.id === agent.id) { closeChat(); return; }
-    closeChat(); chatActor = actors.get(agent.id); chat.hidden = false;
+  async function openChat() {
+    const actor = actors.get(agent.id);
+    if (!actor) return;
+    actor.awakeUntil = Date.now() + 12000;
+    closeChat(); chatActor = actor; chat.hidden = false;
+    positionChat(actor);
     spirit.setAttribute('aria-expanded', 'true');
-    await api.setChatFocus(true); input.focus();
-  });
+    try { await api.setChatFocus(true); input.focus(); }
+    catch { chatStatus.textContent = 'Could not focus chat. Try opening Nova chat from the controls.'; }
+  }
+  for (const control of [spirit, bubble]) {
+    control.addEventListener('pointerdown', (event) => {
+      event.preventDefault(); event.stopPropagation();
+      void openChat();
+    });
+    // Keyboard and assistive activation. Mouse activation already opened on pointerdown.
+    control.addEventListener('click', (event) => { if (event.detail === 0) void openChat(); });
+  }
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); const text = input.value.trim(); if (!text || send.disabled) return;
     send.disabled = true; chatStatus.textContent = 'Thinking…';
     try {
-      const result = await api.chatCompanion(text);
+      const result = await (awaitingName ? api.setCompanionName(text) : api.chatCompanion(text));
       chatStatus.textContent = result.error || result.skipped || '';
       if (!result.error && !result.skipped) {
         remember({ id: `user:${result.id}`, text, source: 'you', expiresAt: 0 });
@@ -372,7 +408,9 @@ function createActor(agent, avatar, index) {
     spirit,
     chat,
     historyLog,
+    chatInput: input, chatSend: send,
     playState: new play.PlayState(),
+    awakeUntil: Date.now() + 6000,
     label,
     labelName,
     labelDetail,
@@ -406,6 +444,7 @@ function updateActorElement(actor) {
   }
   element.classList.toggle('is-root', Boolean(agent.isRoot));
   element.classList.toggle('is-dragging', Boolean(actor.dragging));
+  element.style.setProperty('--interaction-scale', String(actorScale(agent)));
   element.style.setProperty('--avatar-size', `${avatarSizeFor(agent)}px`);
   const detail = detailsFor(agent);
   const layout = labelLayout(settings, Boolean(detail));
@@ -454,7 +493,7 @@ function reconcileActors() {
 }
 
 function updateSpeech(actor) {
-  const message = settings?.companionRemarks && (settings.singleCompanion ? latestMessage : reactions.get(actor.agent.sessionId, actor.agent.id));
+  const message = (awaitingName && firstIntroduction) || (settings?.companionRemarks && (settings.singleCompanion ? latestMessage : reactions.get(actor.agent.sessionId, actor.agent.id)));
   actor.bubble.hidden = !message || message.expiresAt <= Date.now() || chatActor === actor;
   if (!message) return;
   const text = [message.text, message.quip].filter(Boolean).join(' — ');
@@ -462,11 +501,12 @@ function updateSpeech(actor) {
   if (message.source !== 'you' && !message.silent && desktop?.safeZones.length) voice.offer(message, settings?.language);
   // Position against the viewport so speech remains readable near screen edges.
   const selected = viewportZones()[actor.zoneIndex] || viewportZones()[0];
-  const width = Math.min(260, selected.width - 16);
+  const scale = actorScale(actor.agent);
+  const width = Math.min(260 * scale, selected.width - 16);
   actor.bubble.style.width = `${width}px`;
   actor.bubble.style.left = `${clamp(actor.x + avatarSizeFor(actor.agent) / 2 - width / 2,
     selected.x + 8, selected.x + selected.width - width - 8) - actor.x}px`;
-  const top = actor.y < selected.y + 110 ? actor.y + actorHeight(actor) + 8 : actor.y - 100;
+  const top = actor.y < selected.y + 110 ? actor.y + actorHeight(actor) + 8 : actor.y - 100 * scale;
   actor.bubble.style.top = `${clamp(top, selected.y + 8, selected.y + selected.height - 104) - actor.y}px`;
 }
 
@@ -489,7 +529,7 @@ function animationFor(actor, moving) {
   if (actor.agent.status === 'done') return animations.wave;
   if (actor.playState.mode === 'pounce') return animations.wave;
   if (actor.avatar.frameAtlas && ['idle', 'dormant'].includes(actor.agent.status) && !moving
-    && actor.playState.mode !== 'peek') return animations.sleep;
+    && actor.playState.mode !== 'peek' && chatActor !== actor && Date.now() > actor.awakeUntil) return animations.sleep;
   if (['idle', 'dormant'].includes(actor.agent.status) && !moving) return animations.idle;
   if (moving && actor.velocityX > 4) return animations.right;
   if (moving && actor.velocityX < -4) return animations.left;
@@ -505,7 +545,7 @@ function applySpriteFrame(actor, time, moving) {
     const frames = atlas.animations[name] || atlas.animations.idle;
     const frame = frames[reduced ? 0 : frameIndex({ durations: frames.map((item) => item.duration) }, time)];
     const size = avatarSizeFor(actor.agent), height = size * 1.08334;
-    const scale = Math.min(size / frame.width, height / frame.height);
+    const scale = Math.min(size / atlas.referenceWidth, height / atlas.referenceHeight);
     const art = actor.spriteArt;
     art.style.width = `${frame.width * scale}px`; art.style.height = `${frame.height * scale}px`;
     art.style.left = `${(size - frame.width * scale) / 2}px`;
@@ -524,7 +564,7 @@ function applySpriteFrame(actor, time, moving) {
 }
 
 function moveActor(actor, deltaSeconds, time) {
-  if (actor.dragging) return false;
+  if (actor.dragging || chatActor === actor) return false;
   if (['idle', 'dormant'].includes(actor.agent.status) && !['escape', 'peek', 'pounce', 'stalk'].includes(actor.playState.mode)) {
     actor.velocityX = 0;
     actor.velocityY = 0;
@@ -610,6 +650,8 @@ function animate(time) {
   applySeparation();
   for (const actor of actors.values()) {
     constrainActor(actor);
+    actor.element.style.setProperty('--avatar-size', `${avatarSizeFor(actor.agent)}px`);
+    actor.element.style.setProperty('--interaction-scale', String(actorScale(actor.agent)));
     actor.element.style.transform = `translate3d(${actor.x.toFixed(2)}px, ${actor.y.toFixed(2)}px, 0)`;
     positionChat(actor);
   }
@@ -618,11 +660,12 @@ function animate(time) {
 
 function positionChat(actor) {
   const selected = viewportZones()[actor.zoneIndex] || viewportZones()[0];
-  const width = Math.min(340, selected.width - 16);
+  const scale = actorScale(actor.agent);
+  const width = Math.min(340 * scale, selected.width - 16);
   actor.chat.style.width = `${width}px`;
   actor.chat.style.left = `${clamp(actor.x - 80, selected.x + 8, selected.x + selected.width - width - 8) - actor.x}px`;
-  const top = actor.y > selected.y + 260 ? actor.y - 245 : actor.y + actorHeight(actor) + 12;
-  actor.chat.style.top = `${clamp(top, selected.y + 8, Math.max(selected.y + 8, selected.y + selected.height - 245)) - actor.y}px`;
+  const top = actor.y > selected.y + 260 * scale ? actor.y - 245 * scale : actor.y + actorHeight(actor) + 12;
+  actor.chat.style.top = `${clamp(top, selected.y + 8, Math.max(selected.y + 8, selected.y + selected.height - 245 * scale)) - actor.y}px`;
 }
 
 function updatePlay(actor) {
@@ -638,6 +681,7 @@ function updatePlay(actor) {
     && cursor.x < selected.x + selected.width - size && cursor.y < selected.y + selected.height - size
     && desktop?.safeZones.length > 0;
   const nearCursor = cursorAvailable && Math.hypot(cursor.x - actor.x, cursor.y - actor.y) < 180;
+  if (nearCursor && desktop?.moved) actor.awakeUntil = Date.now() + 6000;
   const previous = actor.playState.mode;
   if (!actor.dragging) actor.playState.update({ now: Date.now(), idleMs: desktop?.idleMs || 0,
     moved: desktop?.moved, reduced: reduced || !settings?.companionPlayful,
@@ -680,7 +724,7 @@ function updateInteractiveClass() {
 function updateHitTests(x, y) {
   if (draggedActor) return;
   const target = document.elementFromPoint(x, y);
-  const control = Boolean(target?.closest('.companion-spirit, .companion-chat'));
+  const control = Boolean(target?.closest('.companion-spirit, .companion-chat, .companion-bubble'));
   if (control !== lastControlHitTest) {
     lastControlHitTest = control; void api.setControlHitTest(control);
   }
@@ -714,6 +758,7 @@ world.addEventListener('pointerdown', (event) => {
   if (!actor) return;
   draggedActor = actor;
   actor.dragging = true;
+  actor.awakeUntil = Date.now() + 12000;
   actor.playState.pickup(Date.now());
   actor.route = [];
   actor.transition = null;
@@ -726,19 +771,20 @@ function finishDrag(event) {
   if (!draggedActor) return;
   const actor = draggedActor;
   actor.dragging = false;
+  actor.awakeUntil = Date.now() + 12000;
   const dropMode = actor.playState.drop(Date.now());
   constrainActor(actor);
   chooseTarget(actor);
   updateActorElement(actor);
-  actor.element.releasePointerCapture?.(event.pointerId);
   draggedActor = null;
+  if (actor.element.hasPointerCapture?.(event.pointerId)) actor.element.releasePointerCapture(event.pointerId);
   actor.element.classList.add('just-dropped');
   setTimeout(() => actor.element.classList.remove('just-dropped'), 500);
   if (settings.companionRemarks) void playRemark(dropMode === 'escape' ? 'escaped' : 'moved', actor);
 }
 
-world.addEventListener('pointerup', finishDrag);
-world.addEventListener('pointercancel', finishDrag);
+document.addEventListener('pointerup', finishDrag);
+document.addEventListener('pointercancel', finishDrag);
 world.addEventListener('lostpointercapture', (event) => {
   if (draggedActor && event.target === draggedActor.element) finishDrag(event);
 });
@@ -769,6 +815,7 @@ api.onSettings((value) => {
   const nextZoneSignature = JSON.stringify(value.zone || null);
   const zoneChanged = nextZoneSignature !== zoneSignature;
   settings = value.settings;
+  voice.configure(settings);
   voice.setMuted(settings.companionVoiceMuted || !settings.companionRemarks || !settings.overlayEnabled);
   reactions.observe(snapshot, { enabled: settings?.companionRemarks, language: settings?.language, cloud: settings?.companionCloudEnabled });
   zone = value.zone;
@@ -827,10 +874,15 @@ api.onConversation(({ text, result, origin }) => {
   remember({ id: `user:${result.id}`, text, source: 'you', expiresAt: 0 });
   if (result.quip) remember({ ...result, text: '', source: 'nova', silent: origin !== 'overlay' });
 });
+api.onProfile(() => {
+  awaitingName = false; firstIntroduction = null;
+  for (const actor of actors.values()) renderNameState(actor);
+});
 api.onMemoryCleared(() => {
   history.length = 0; historyIds.clear(); latestMessage = null; reactions.messages.clear();
-  voice.synthesis?.cancel();
+  voice.stop();
   for (const actor of actors.values()) renderHistory(actor);
+  void api.companionHistory().then((memory) => { if (!memory.error && memory.introduction) showIntroduction(memory.introduction); });
 });
 
 // Remove briefly retained idle actors after their final speech expires.
@@ -841,6 +893,7 @@ async function initialize() {
   snapshot = bootstrap.state;
   reactions.observe(snapshot, { enabled: false });
   settings = bootstrap.settings;
+  voice.configure(settings);
   voice.setMuted(settings.companionVoiceMuted || !settings.companionRemarks || !settings.overlayEnabled);
   avatars = bootstrap.avatars;
   zone = bootstrap.zone;
@@ -850,6 +903,7 @@ async function initialize() {
   const memory = await api.companionHistory();
   for (const [index, turn] of (memory.turns || []).entries()) remember({ id: `memory:${index}`,
     text: turn.text, source: turn.role === 'user' ? 'you' : 'nova', expiresAt: 0 });
+  if (!memory.error && memory.introduction) showIntroduction(memory.introduction);
   requestAnimationFrame(animate);
 }
 

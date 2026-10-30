@@ -15,12 +15,18 @@ function createEventServer(onPayload, options = {}) {
   const endpoint = endpointForName(options.pipeName);
   const maxBytes = options.maxBytes ?? 64 * 1024;
   let server;
+  let listening = false;
+  const sockets = new Set();
 
   async function listen() {
-    if (server) return endpoint;
-    if (process.platform !== 'win32' && fs.existsSync(endpoint)) fs.unlinkSync(endpoint);
+    if (listening) return endpoint;
+    if (server) throw new Error('Bridge startup already in progress.');
+    // Never unlink an endpoint owned by another running companion.
 
     server = net.createServer((socket) => {
+      sockets.add(socket);
+      socket.on('error', () => {});
+      socket.on('close', () => sockets.delete(socket));
       socket.setEncoding('utf8');
       let buffer = '';
 
@@ -57,9 +63,11 @@ function createEventServer(onPayload, options = {}) {
     });
 
     await new Promise((resolve, reject) => {
-      server.once('error', reject);
+      server.once('error', (error) => { server = null; reject(error); });
       server.listen(endpoint, () => {
-        server.off('error', reject);
+        listening = true;
+        server.removeAllListeners('error');
+        server.on('error', () => { listening = false; });
         resolve();
       });
     });
@@ -70,9 +78,10 @@ function createEventServer(onPayload, options = {}) {
   async function close() {
     if (!server) return;
     const current = server;
-    server = null;
+    server = null; listening = false;
+    for (const socket of sockets) socket.destroy();
     await new Promise((resolve) => current.close(resolve));
-    if (process.platform !== 'win32' && fs.existsSync(endpoint)) fs.unlinkSync(endpoint);
+    // Never unlink an endpoint owned by another running companion.
   }
 
   return { listen, close, endpoint };

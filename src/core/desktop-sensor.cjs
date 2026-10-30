@@ -35,7 +35,7 @@ class DesktopSensor {
         const line = pending.slice(0, newline); pending = pending.slice(newline + 1);
         try {
           const sample = JSON.parse(line);
-          if (sample.ok === true) this.onSample({ available: true, windows: cleanWindows(sample.windows, this.convert), timestamp: Date.now() });
+          if (sample.ok === true) this.onSample({ available: true, windows: cleanWindows(sample.windows, this.convert), scales: (sample.scales || []).filter(d => [d.x,d.y,d.width,d.height,d.scaleFactor].every(Number.isFinite) && d.scaleFactor >= 1 && d.scaleFactor <= 5).slice(0,16), timestamp: Date.now() });
         } catch { /* Malformed native samples never reach the renderer. */ }
       }
     });

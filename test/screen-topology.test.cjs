@@ -40,3 +40,26 @@ test('does not create a route across non-touching screens and identifies the dra
   assert.equal(zoneIndexAtPoint(zones, 1700, 400), 1);
   assert.equal(zoneIndexAtPoint(zones, 1400, 400), -1);
 });
+
+
+test('adjacent monitor bounds permit travel across a taskbar gap between work areas', () => {
+  const zones = [
+    { x:0,y:0,width:3840,height:2070,monitorBounds:{x:0,y:0,width:3840,height:2160} },
+    { x:1009,y:2160,width:1920,height:1040,monitorBounds:{x:1009,y:2160,width:1920,height:1080} },
+  ];
+  assert.deepEqual(findZonePath(zones,0,1),[0,1]);
+  assert.equal(sharedEdge(zones[0],zones[1]).axis,'y');
+  assert.equal(sharedEdge({...zones[0],monitorBounds:null},zones[1]),null);
+});
+
+
+test('routes unequal portrait and landscape displays left/above primary without assuming equal DPI', () => {
+  const primary={x:0,y:0,width:2560,height:1400,monitorScale:1.5,monitorBounds:{x:0,y:0,width:2560,height:1440}};
+  const portrait={x:-1080,y:0,width:1080,height:1880,monitorScale:1,monitorBounds:{x:-1080,y:0,width:1080,height:1920}};
+  const above={x:350,y:-1200,width:1920,height:1160,monitorScale:1.25,monitorBounds:{x:350,y:-1200,width:1920,height:1200}};
+  assert.equal(sharedEdge(primary,portrait).direction,'left');
+  assert.equal(sharedEdge(primary,above).direction,'up');
+  assert.deepEqual(findZonePath([portrait,primary,above],0,2),[0,1,2]);
+  assert.equal(zoneIndexAtPoint([primary,portrait,above],500,-500),2);
+  assert.equal(findZonePath([primary],0,2),null);
+});

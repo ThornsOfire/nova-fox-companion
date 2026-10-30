@@ -1,5 +1,5 @@
 {
-  "name": "codex-avatars",
+  "name": "nova-fox-companion",
   "version": "0.7.2+codex.20260811191704",
   "description": "Give every Codex agent an independent animated desktop companion.",
   "author": {
@@ -15,7 +15,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Codex Avatars",
+    "displayName": "Nova Fox Companion",
     "shortDescription": "Animated companions for every Codex agent",
     "longDescription": "Adds trusted Codex lifecycle hooks, a workflow for creating compatible Pet v2 avatars, and controls for the local system overlay companion.",
     "developerName": "Codex Avatars contributors",
@@ -25,9 +25,9 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Create a new animated avatar for Codex Avatars.",
+      "Create a new animated avatar for Nova Fox Companion.",
       "Help me configure which avatars appear on my screens.",
-      "Check my Codex Avatars integration."
+      "Check my Nova Fox Companion integration."
     ],
     "brandColor": "#45D7A8",
     "composerIcon": "./assets/icon.png",

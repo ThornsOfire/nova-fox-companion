@@ -22,7 +22,7 @@ async function makePet(root, id, manifest = {}) {
 }
 
 test('reads the Codex v2 pet contract', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatars-pet-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-pet-'));
   const directory = await makePet(root, 'minuit');
   const avatar = await readAvatarPackage(directory, 'codex-pet');
   assert.equal(avatar.spriteVersionNumber, 2);
@@ -32,7 +32,7 @@ test('reads the Codex v2 pet contract', async () => {
 });
 
 test('prefers the first root when pet ids collide', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatars-roots-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-roots-'));
   const user = path.join(root, 'user');
   const bundled = path.join(root, 'bundled');
   await makePet(user, 'same', { displayName: 'User pet' });
@@ -47,7 +47,7 @@ test('prefers the first root when pet ids collide', async () => {
 });
 
 test('reads dimensions from an extended WebP header', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatars-webp-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-webp-'));
   const filePath = path.join(root, 'atlas.webp');
   const data = Buffer.alloc(30);
   data.write('RIFF', 0, 'ascii');

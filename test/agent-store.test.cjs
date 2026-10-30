@@ -110,10 +110,10 @@ test('replaces the main-agent fallback with the Codex task title', () => {
   assert.equal(root.label, 'avatars · 8757');
   store.apply({
     kind: 'agent.metadata', sessionId: '019fd6b6-6e4f-71f0-a2ad-e46cc2f08757',
-    isRoot: true, agentLabel: 'Continue Codex Avatars', timestamp: 2,
+    isRoot: true, agentLabel: 'Continue Nova Fox Companion', timestamp: 2,
   });
   root = store.snapshot().sessions[0].agents[0];
-  assert.equal(root.label, 'Continue Codex Avatars');
+  assert.equal(root.label, 'Continue Nova Fox Companion');
 });
 
 test('replaces a generic profile with local task, model, and effort metadata', () => {

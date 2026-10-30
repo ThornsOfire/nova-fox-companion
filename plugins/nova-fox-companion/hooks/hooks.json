@@ -1,0 +1,83 @@
+{
+  "description": "Start Nova Fox Companion when needed and forward privacy-minimized lifecycle metadata.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}/scripts/codex-hook.ps1\" -Marker \"NOVA_FOX_COMPANION_HOOK_V1\" -DevRoot \"${PLUGIN_ROOT}/../..\" -PluginData \"${PLUGIN_DATA}\"",
+            "timeout": 3,
+            "statusMessage": "Waking Nova Fox Companion"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}/scripts/codex-hook.ps1\" -Marker \"NOVA_FOX_COMPANION_HOOK_V1\" -DevRoot \"${PLUGIN_ROOT}/../..\" -PluginData \"${PLUGIN_DATA}\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}/scripts/codex-hook.ps1\" -Marker \"NOVA_FOX_COMPANION_HOOK_V1\" -DevRoot \"${PLUGIN_ROOT}/../..\" -PluginData \"${PLUGIN_DATA}\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}/scripts/codex-hook.ps1\" -Marker \"NOVA_FOX_COMPANION_HOOK_V1\" -DevRoot \"${PLUGIN_ROOT}/../..\" -PluginData \"${PLUGIN_DATA}\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}/scripts/codex-hook.ps1\" -Marker \"NOVA_FOX_COMPANION_HOOK_V1\" -DevRoot \"${PLUGIN_ROOT}/../..\" -PluginData \"${PLUGIN_DATA}\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}/scripts/codex-hook.ps1\" -Marker \"NOVA_FOX_COMPANION_HOOK_V1\" -DevRoot \"${PLUGIN_ROOT}/../..\" -PluginData \"${PLUGIN_DATA}\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}/scripts/codex-hook.ps1\" -Marker \"NOVA_FOX_COMPANION_HOOK_V1\" -DevRoot \"${PLUGIN_ROOT}/../..\" -PluginData \"${PLUGIN_DATA}\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -18,7 +18,7 @@ test('merges hooks without replacing unrelated user handlers', () => {
     customField: true,
   };
 
-  const merged = mergeHooksConfig(existing, 'C:\\Program Files\\Codex Avatars\\codex-hook.ps1');
+  const merged = mergeHooksConfig(existing, 'C:\\Program Files\\Nova Fox Companion\\codex-hook.ps1');
   assert.equal(merged.description, 'My hooks');
   assert.equal(merged.customField, true);
   assert.equal(merged.hooks.Stop[0].hooks[0].command, 'my-existing-command');
@@ -37,4 +37,13 @@ test('installation is idempotent and removal preserves other hooks', () => {
   const removed = removeHooksConfig(second);
   assert.equal(hasInstalledHooks(removed), false);
   assert.equal(removed.hooks.Stop[0].hooks[0].command, 'keep-me');
+});
+
+
+test('Nova installation and removal leave the upstream bridge intact', () => {
+  const upstream = { type: 'command', command: 'powershell.exe -Marker CODEX_AVATARS_HOOK_V1' };
+  const existing = { hooks: { Stop: [{ hooks: [upstream] }] } };
+  const installed = mergeHooksConfig(existing, 'C:/Nova Fox Companion/codex-hook.ps1');
+  assert.deepEqual(installed.hooks.Stop[0].hooks[0], upstream);
+  assert.deepEqual(removeHooksConfig(installed).hooks.Stop, existing.hooks.Stop);
 });

@@ -49,7 +49,7 @@ function buildAvatarPrompt(value, language = 'en') {
     return [
       goal,
       '',
-      'Utilise directement $hatch-pet pour créer puis installer un avatar animé Codex Pet v2 soigné dans ma bibliothèque locale Codex Avatars. N’invoque pas de skill wrapper avant Hatch Pet.',
+      'Utilise directement $hatch-pet pour créer puis installer un avatar animé Codex Pet v2 soigné dans ma bibliothèque locale Nova Fox Companion. N’invoque pas de skill wrapper avant Hatch Pet.',
       '',
       'Brief du personnage :',
       details,
@@ -65,7 +65,7 @@ function buildAvatarPrompt(value, language = 'en') {
   return [
     goal,
     '',
-    'Use $hatch-pet directly to create and install a polished animated Codex Pet v2 avatar in my local Codex Avatars library. Do not invoke a wrapper skill before Hatch Pet.',
+    'Use $hatch-pet directly to create and install a polished animated Codex Pet v2 avatar in my local Nova Fox Companion library. Do not invoke a wrapper skill before Hatch Pet.',
     '',
     'Character brief:',
     details,

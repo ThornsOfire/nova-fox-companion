@@ -2,7 +2,7 @@
 
 const path = require('node:path');
 
-const PLUGIN_NAME = 'codex-avatars';
+const PLUGIN_NAME = 'nova-fox-companion';
 
 function integrationRoot(options) {
   if (options.isPackaged) return path.join(options.resourcesPath, 'integration');

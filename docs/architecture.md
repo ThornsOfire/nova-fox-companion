@@ -2,9 +2,9 @@
 
 ## Product boundary
 
-Codex Avatars is deliberately hybrid:
+Nova Fox Companion is deliberately hybrid:
 
-- the **Codex plugin** supplies lifecycle hooks and the `create-codex-avatar` workflow;
+- the **Codex plugin** supplies lifecycle hooks and the `create-nova-fox-companion` workflow;
 - the **local renderer companion** owns the operating-system overlay, tray controls, settings, and sprite animation.
 
 Plugin UI is hosted inside ChatGPT. It cannot create a global always-on-top window, so the renderer is the smallest honest system component that satisfies desktop roaming.
@@ -18,7 +18,7 @@ Codex lifecycle
       v
 PowerShell bridge -- starts renderer when absent
       |
-      | local named pipe: codex-avatars-v1
+      | local named pipe: nova-fox-companion-v1
       v
 Normalizer + agent store
       ^
@@ -35,19 +35,19 @@ independent Codex Pet v2 sprite actors
 
 ## Plugin package
 
-The repo marketplace lives at `.agents/plugins/marketplace.json`; the plugin source lives under `plugins/codex-avatars/`.
+The repo marketplace lives at `.agents/plugins/marketplace.json`; the plugin source lives under `plugins/nova-fox-companion/`.
 
 - `hooks/hooks.json` subscribes to session, permission, prompt, stop, and subagent lifecycle events.
 - `scripts/codex-hook.ps1` forwards only explicit fields. On the first event it can start either the source renderer, a configured packaged companion, or the standard per-user install.
-- `skills/create-codex-avatar/` explicitly invokes `$hatch-pet`, resolves the bundled workspace Python (including Pillow), and writes only to the shared Codex Pets directory.
+- `skills/create-nova-fox-companion/` explicitly invokes `$hatch-pet`, resolves the bundled workspace Python (including Pillow), and writes only to the shared Codex Pets directory.
 
-Codex copies installed local plugins into its cache. `install.ps1` therefore stores `CODEX_AVATARS_DEV_ROOT` as a user environment variable so a cached hook can still find a cloned source renderer. Packaged installs instead resolve the companion executable from the install directory.
+Codex copies installed local plugins into its cache. `install.ps1` therefore stores `NOVA_FOX_COMPANION_DEV_ROOT` as a user environment variable so a cached hook can still find a cloned source renderer. Packaged installs instead resolve the companion executable from the install directory.
 
 ## Installer package
 
-The NSIS installer is the end-user path. It embeds the repo marketplace and plugin under `resources/integration`, so it does not depend on a clone after installation. Its custom install phase merges standalone lifecycle hooks and registers the exact executable path in the per-user `CODEX_AVATARS_APP` environment value. The custom uninstall phase removes only hooks carrying the Codex Avatars marker and deletes that environment value only when it still points at the uninstalling copy.
+The NSIS installer is the end-user path. It embeds the repo marketplace and plugin under `resources/integration`, so it does not depend on a clone after installation. Its custom install phase merges standalone lifecycle hooks and registers the exact executable path in the per-user `NOVA_FOX_COMPANION_APP` environment value. The custom uninstall phase removes only hooks carrying the Nova Fox Companion marker and deletes that environment value only when it still points at the uninstalling copy.
 
-The first normal packaged launch shows a four-step guide. Its plugin action opens the bundled marketplace through a `codex://plugins/codex-avatars` deeplink. The user still installs the plugin and reviews its hooks in Codex; this security boundary is intentionally not automated.
+The first normal packaged launch shows a four-step guide. Its plugin action opens the bundled marketplace through a `codex://plugins/nova-fox-companion` deeplink. The user still installs the plugin and reviews its hooks in Codex; this security boundary is intentionally not automated.
 
 ## Overlay and control surface
 
@@ -69,7 +69,7 @@ Idle main agents and completed subagents enter a dormant state after the normal 
 
 ## Avatar library
 
-`src/core/avatar-library.cjs` scans the shared `${CODEX_HOME}/pets` directory first and optional bundled assets second. It validates package paths and WebP dimensions before exposing an asset through the private `codex-avatar:` protocol.
+`src/core/avatar-library.cjs` scans the shared `${CODEX_HOME}/pets` directory first and optional bundled assets second. It validates package paths and WebP dimensions before exposing an asset through the private `nova-fox-companion:` protocol.
 
 V2 sheets use 8 columns, 11 rows, `192x208` cells, and a final size of `1536x2288`. The overlay maps lifecycle state and horizontal velocity to the native idle, directional-running, waving, waiting, working, and review rows.
 

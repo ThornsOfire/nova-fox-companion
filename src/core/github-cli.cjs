@@ -268,7 +268,7 @@ class GitHubCli {
       response = await this.fetchImpl(GITHUB_CLI_DOWNLOAD_URL, {
         method: 'GET',
         redirect: 'follow',
-        headers: { accept: 'application/octet-stream', 'user-agent': 'Codex-Avatars' },
+        headers: { accept: 'application/octet-stream', 'user-agent': 'Nova-Fox-Companion' },
         signal: downloadSignal,
       });
     } catch (error) {

@@ -3,7 +3,7 @@
 (function exposeTopology(root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
-  else root.CodexAvatarTopology = api;
+  else root.NovaFoxCompanionTopology = api;
 }(typeof globalThis === 'object' ? globalThis : this, () => {
   function normalizedZone(value) {
     const source = value && typeof value === 'object' ? value : {};
@@ -47,6 +47,11 @@
       if (right.y + right.height === left.y) {
         return { axis: 'y', direction: 'up', boundary: left.y, start: verticalStart, end: verticalEnd };
       }
+    }
+    // Work areas can be separated by a taskbar even when the displays touch.
+    // Only bridge that seam when both complete display rectangles are known.
+    if (leftValue.monitorBounds && rightValue.monitorBounds) {
+      return sharedEdge(leftValue.monitorBounds, rightValue.monitorBounds);
     }
     return null;
   }

@@ -5,10 +5,11 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 
 const DEFAULT_SETTINGS = Object.freeze({
-  schemaVersion: 8,
+  schemaVersion: 10,
   language: 'en',
+  codexHome: null,
   overlayEnabled: true,
-  passive: true,
+  passive: false,
   enabledAvatarIds: [],
   avatarSelectionInitialized: false,
   knownAvatarIds: [],
@@ -20,6 +21,9 @@ const DEFAULT_SETTINGS = Object.freeze({
   showLabels: true,
   companionRemarks: true,
   companionVoiceMuted: false,
+  companionVoiceProvider: 'local',
+  companionSpeechVoice: 'marin',
+  companionSpeechDailyRequests: 30,
   companionCloudEnabled: false,
   companionVisionEnabled: false,
   companionVisionExcludedApps: ['1password', 'bitwarden', 'keepass', 'lockapp', 'codex', 'chatgpt', 'electron', 'nova fox companion'],
@@ -82,6 +86,8 @@ function normalizeSettings(value) {
   const legacyAvatarSize = clampInteger(source.avatarSize, 72, 180, DEFAULT_SETTINGS.mainAvatarSize);
   return {
     schemaVersion: DEFAULT_SETTINGS.schemaVersion,
+    codexHome: typeof source.codexHome === 'string' && path.isAbsolute(source.codexHome)
+      && !/[\x00-\x1f]/.test(source.codexHome) ? path.normalize(source.codexHome) : null,
     language: source.language === 'fr' ? 'fr' : 'en',
     overlayEnabled: source.overlayEnabled === undefined
       ? DEFAULT_SETTINGS.overlayEnabled
@@ -102,6 +108,9 @@ function normalizeSettings(value) {
       ? DEFAULT_SETTINGS.companionRemarks : Boolean(source.companionRemarks),
     companionVoiceMuted: source.companionVoiceMuted === undefined
       ? DEFAULT_SETTINGS.companionVoiceMuted : Boolean(source.companionVoiceMuted),
+    companionVoiceProvider: ['cloud', 'local'].includes(source.companionVoiceProvider) ? source.companionVoiceProvider : 'local',
+    companionSpeechVoice: ['marin','coral','shimmer','sage','cedar'].includes(source.companionSpeechVoice) ? source.companionSpeechVoice : 'marin',
+    companionSpeechDailyRequests: clampInteger(source.companionSpeechDailyRequests, 1, 200, 30),
     companionCloudEnabled: Boolean(source.companionCloudEnabled),
     companionVisionEnabled: Boolean(source.companionVisionEnabled),
     companionVisionExcludedApps: source.companionVisionExcludedApps === undefined
@@ -166,8 +175,9 @@ class SettingsStore {
 
   async update(patch) {
     const operation = this.updateQueue.then(async () => {
-      this.value = mergeSettings(this.value, patch);
-      await this.#write(this.value);
+      const next = mergeSettings(this.value, patch);
+      await this.#write(next);
+      this.value = next;
       return this.snapshot();
     });
     this.updateQueue = operation.catch(() => {});

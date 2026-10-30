@@ -62,3 +62,17 @@ test('translates a picker drag on the left monitor into negative desktop coordin
     { x: -1140, y: 80, width: 620, height: 430 },
   );
 });
+
+
+test('refreshing a changed monitor layout uses the new bounds and available IDs', () => {
+  const initial=resolveRoamingZone({mode:'all'},[
+    {id:'primary',primary:true,scaleFactor:1.5,workArea:{x:0,y:0,width:2560,height:1400}},
+    {id:'portrait',scaleFactor:1,workArea:{x:-1080,y:-200,width:1080,height:1880}},
+  ]);
+  assert.deepEqual(initial.windowBounds,{x:-1080,y:-200,width:3640,height:1880});
+  const reconfigured=resolveRoamingZone({mode:'displays',displayIds:['portrait']},[
+    {id:'primary',primary:true,scaleFactor:2,workArea:{x:0,y:0,width:3840,height:2100}},
+  ]);
+  assert.deepEqual(reconfigured.displayIds,['primary']);
+  assert.deepEqual(reconfigured.windowBounds,{x:0,y:0,width:3840,height:2100});
+});

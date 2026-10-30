@@ -410,7 +410,7 @@ function buildPullRequestBody(prepared, options = {}) {
     '',
     duplicateNotes,
     '',
-    '### Codex Avatars preflight',
+    '### Nova Fox Companion preflight',
     '',
     '- [x] Exactly `submission.json`, `pet.json`, and `spritesheet.webp` are included.',
     '- [x] `pet.json` id matches the submission folder.',
@@ -422,7 +422,7 @@ function buildPullRequestBody(prepared, options = {}) {
     '',
     `![${markdownLine(prepared.name)} final Pet v2 atlas](${rawSpritesheet})`,
     '',
-    '> Submitted directly from Codex Avatars. No Codex generation or review credits were used for this publication step. Protected repository CI publishes a focused green submission automatically; post-publication concerns can be reported through the public Pet reporting flow.',
+    '> Submitted directly from Nova Fox Companion. No Codex generation or review credits were used for this publication step. Protected repository CI publishes a focused green submission automatically; post-publication concerns can be reported through the public Pet reporting flow.',
   ].join('\n');
 }
 
@@ -504,7 +504,7 @@ class GitHubMarketplacePublisher {
     let branch = '';
     if (existingPull) {
       branch = boundedText(existingPull.head?.ref, 'Existing submission branch', 240, { singleLine: true });
-      const expectedPrefix = `codex-avatars/submit-${prepared.petSlug}-`;
+      const expectedPrefix = `nova-fox-companion/submit-${prepared.petSlug}-`;
       if (!branch.startsWith(expectedPrefix) || !/^\d{14}$/.test(branch.slice(expectedPrefix.length))) {
         throw new Error('The existing submission uses an unexpected branch name.');
       }
@@ -573,7 +573,7 @@ class GitHubMarketplacePublisher {
     }
 
     const timestamp = new Date(this.now()).toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
-    branch = `codex-avatars/submit-${prepared.petSlug}-${timestamp}`;
+    branch = `nova-fox-companion/submit-${prepared.petSlug}-${timestamp}`;
     await this.github.api('POST', `/repos/${targetFullName}/git/refs`, {
       ref: `refs/heads/${branch}`,
       sha: commitSha,

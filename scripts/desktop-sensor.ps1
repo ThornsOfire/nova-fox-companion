@@ -8,6 +8,21 @@ using System.Text;
 public static class NovaWindows {
   public struct Rect { public int left, top, right, bottom; }
   public class Window { public string id, app; public bool foreground; public int x, y, width, height; }
+  [StructLayout(LayoutKind.Sequential)] public struct MonitorInfo { public int size; public Rect monitor, work; public uint flags; }
+  public class DisplayScale { public int x,y,width,height; public double scaleFactor; }
+  public delegate bool MonitorProc(IntPtr monitor, IntPtr dc, ref Rect rect, IntPtr data);
+  [DllImport("user32.dll")] static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr rect, MonitorProc callback, IntPtr data);
+  [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+  [DllImport("shcore.dll")] static extern int GetScaleFactorForMonitor(IntPtr monitor, out int scale);
+  public static List<DisplayScale> Scales() {
+    var values = new List<DisplayScale>();
+    EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (IntPtr monitor, IntPtr dc, ref Rect unused, IntPtr data) => {
+      var info = new MonitorInfo {size=Marshal.SizeOf(typeof(MonitorInfo))}; int scale;
+      if (GetMonitorInfo(monitor, ref info) && GetScaleFactorForMonitor(monitor,out scale)==0)
+        values.Add(new DisplayScale {x=info.monitor.left,y=info.monitor.top,width=info.monitor.right-info.monitor.left,height=info.monitor.bottom-info.monitor.top,scaleFactor=scale/100.0});
+      return true;
+    }, IntPtr.Zero); return values;
+  }
   public delegate bool EnumProc(IntPtr hwnd, IntPtr param);
   [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc callback, IntPtr param);
   [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr hwnd);
@@ -49,6 +64,6 @@ public static class NovaWindows {
 '@
 [NovaWindows]::Initialize()
 do {
-  @{ ok = $true; windows = @([NovaWindows]::Read($ExcludeProcess)) } | ConvertTo-Json -Compress -Depth 4
+  @{ ok = $true; windows = @([NovaWindows]::Read($ExcludeProcess)); scales = @([NovaWindows]::Scales()) } | ConvertTo-Json -Compress -Depth 4
   if (-not $Once) { Start-Sleep -Milliseconds 400 }
 } while (-not $Once)

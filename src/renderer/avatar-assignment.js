@@ -1,7 +1,7 @@
 (function avatarAssignmentModule(root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
-  if (root) root.CodexAvatarAssignment = api;
+  if (root) root.NovaFoxCompanionAssignment = api;
 }(typeof globalThis !== 'undefined' ? globalThis : this, () => {
   function stableHash(value) {
     let result = 2166136261;

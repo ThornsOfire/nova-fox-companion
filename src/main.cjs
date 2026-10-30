@@ -30,10 +30,17 @@ let desktopTimer = null;
 let desktopSample = { available: false, windows: [], timestamp: 0 };
 let fullscreenSuppressed = false;
 let overlayControlHitTest = false;
+let overlayChatOpen = false;
+let nativeDisplayScales = [];
+let settingsWindowScale = 1;
 let lastCursorPoint = null;
 let cursorIdleSince = Date.now();
 const knownChatSessions = new Set();
+const { SCHEME: RESTORE_SCHEME, isRestoreLink } = require('./core/restore-link.cjs');
+const { CompanionSpeech } = require('./core/companion-speech.cjs');
+let companionSpeech = null;
 const { CompanionBrain, CompanionKeyStore, CompanionMemory } = require('./core/companion-brain.cjs');
+const { introduction } = require('./core/companion-profile.cjs');
 let companionBrain = null;
 let companionKeys = null;
 const { reconcileAgentActivityRecords } = require('./core/agent-activity-reconciler.cjs');
@@ -86,6 +93,7 @@ const {
   setLaunchAtLogin,
 } = require('./core/login-item.cjs');
 const { mergeSettings, SettingsStore } = require('./core/settings-store.cjs');
+const { resolveCodexHome, validateCodexHome, matchesCodexHome } = require('./core/codex-home.cjs');
 const { checkForUpdate } = require('./core/update-check.cjs');
 const {
   hooksStatus,
@@ -93,8 +101,12 @@ const {
   uninstallHooks,
 } = require('./core/hook-config-service.cjs');
 
+// Mixed-DPI desktop-spanning overlays otherwise receive clamped, offset Win32 bounds.
+// This affects Nova only; it does not change Windows display scaling.
+if (process.platform === 'win32') app.commandLine.appendSwitch('force-device-scale-factor', '1');
+
 protocol.registerSchemesAsPrivileged([{
-  scheme: 'codex-avatar',
+  scheme: 'nova-fox-companion',
   privileges: {
     standard: true,
     secure: true,
@@ -102,7 +114,7 @@ protocol.registerSchemesAsPrivileged([{
   },
 }]);
 
-const store = new AgentStore();
+let store = new AgentStore();
 const captureArgument = findArgument('--capture=');
 const settingsCaptureArgument = findArgument('--capture-settings=');
 const settingsScrollArgument = findArgument('--settings-scroll=');
@@ -118,7 +130,7 @@ const zonePickerCapturePath = zonePickerCaptureArgument
   : null;
 if (profileArgument) app.setPath('userData', path.resolve(process.cwd(), profileArgument));
 const eventServer = createEventServer(handlePayload, profileArgument
-  ? { pipeName: `codex-avatars-preview-${process.pid}` }
+  ? { pipeName: `nova-fox-companion-preview-${process.pid}` }
   : undefined);
 const backgroundLaunch = process.argv.includes('--background');
 const commandLineAction = process.argv.includes('--install-hooks')
@@ -144,6 +156,10 @@ let assetPaths = new Map();
 let overlayHitTest = false;
 let isQuitting = false;
 let metadataResolver = null;
+let homeGeneration = 0;
+let bridgeError = null;
+let bridgeRetryTimer = null;
+let lastHookAt = null;
 let threadTitleMonitor = null;
 const pendingMetadata = new Set();
 const recentAgentActivityCache = new Map();
@@ -166,7 +182,7 @@ function findArgument(prefix) {
 
 async function promptForUpdate() {
   // Fork releases need their own verified updater; never offer an upstream installer.
-  if (!['codex-avatars', 'Codex Avatars'].includes(app.getName())) return;
+  return; // Release updates stay opt-in until the fork has a verified release pipeline.
   if (!app.isPackaged || updateCheckStarted) return;
   updateCheckStarted = true;
   let update = null;
@@ -184,8 +200,8 @@ async function promptForUpdate() {
     type: 'info',
     title: 'Nova Fox Companion',
     message: french
-      ? `Une mise à jour de Codex Avatars (${update.version}) est disponible.`
-      : `A Codex Avatars update (${update.version}) is available.`,
+      ? `Une mise à jour de Nova Fox Companion (${update.version}) est disponible.`
+      : `A Nova Fox Companion update (${update.version}) is available.`,
     detail: french
       ? 'Téléchargez l’installateur, puis exécutez-le pour mettre à jour sans perdre vos réglages ni vos Pets.'
       : 'Download and run the installer to update without losing your settings or Pets.',
@@ -204,7 +220,7 @@ function hookScriptPath() {
 }
 
 function codexHomePath() {
-  return process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
+  return resolveCodexHome(settings?.codexHome).path;
 }
 
 function pluginMarketplacePath() {
@@ -234,8 +250,8 @@ async function openFeedback() {
     title: 'Nova Fox Companion',
     message: french ? 'Que souhaitez-vous partager ?' : 'What would you like to share?',
     detail: french
-      ? 'GitHub s’ouvrira avec un brouillon guidé et la version de Codex Avatars déjà renseignée.'
-      : 'GitHub will open with a guided draft and your Codex Avatars version already filled in.',
+      ? 'GitHub s’ouvrira avec un brouillon guidé et la version de Nova Fox Companion déjà renseignée.'
+      : 'GitHub will open with a guided draft and your Nova Fox Companion version already filled in.',
     buttons: french
       ? ['Signaler un bug', 'Proposer une amélioration', 'Annuler']
       : ['Report a bug', 'Suggest an improvement', 'Cancel'],
@@ -275,7 +291,7 @@ function publicAvatar(record) {
     rows: record.rows,
     frameAtlas: record.frameAtlas || null,
     source: record.source,
-    // `codex-avatar:` works in development but packaged Windows renderers can
+    // `nova-fox-companion:` works in development but packaged Windows renderers can
     // reject a local WebP response from that custom protocol. Every record has
     // already passed the local Pet path and dimension checks, so a file URL is
     // the reliable renderer-only delivery path for this validated asset.
@@ -366,7 +382,7 @@ async function installMarketplacePet(rawSlug) {
 
 function sendMarketplaceSubmissionProgress(stage, extra = {}) {
   if (!settingsWindow || settingsWindow.isDestroyed() || settingsWindow.webContents.isDestroyed()) return;
-  settingsWindow.webContents.send('avatars:marketplace-submission-progress', { stage, ...extra });
+  settingsWindow.webContents.send('nova:marketplace-submission-progress', { stage, ...extra });
 }
 
 async function marketplaceSubmissionStatus() {
@@ -491,6 +507,7 @@ function currentDisplays() {
   const primaryId = String(screen.getPrimaryDisplay().id);
   return screen.getAllDisplays().map((display, index) => serializeDisplay({
     ...display,
+    scaleFactor: nativeDisplayScales.find(d => sameBounds(d, display.bounds))?.scaleFactor || display.scaleFactor,
     primary: String(display.id) === primaryId,
   }, index));
 }
@@ -511,12 +528,17 @@ function desktopPayload() {
   const displays = currentDisplays();
   const blocked = settings?.avoidFullscreen ? blockedDisplays(desktopSample.windows, displays) : [];
   const fallback = !settings?.avoidFullscreen || available || Boolean(capturePath || settingsCapturePath);
-  const zones = currentZone().zones.map((rect) => ({ ...rect,
-    x: rect.x + currentZone().windowBounds.x, y: rect.y + currentZone().windowBounds.y }));
+  const roaming = currentZone();
+  const zones = roaming.zones.map((rect, index) => ({ ...rect,
+    x: rect.x + roaming.windowBounds.x, y: rect.y + roaming.windowBounds.y,
+    monitorBounds: roaming.mode === 'custom' ? null : displays.find(d => String(d.id) === roaming.displayIds[index])?.bounds }));
   const safe = fallback ? safeZones(zones, blocked) : [];
   return { available, timestamp: now, cursor: { x: cursor.x - bounds.x, y: cursor.y - bounds.y },
     moved, idleMs: now - cursorIdleSince, windows: available ? desktopSample.windows.map(local) : [],
-    safeZones: safe.map(local), blocked: blocked.map(local) };
+    safeZones: safe.map(rect => {
+      const original = zones.find(z => sameBounds(z, rect));
+      return { ...local(rect), monitorBounds: original?.monitorBounds ? local(original.monitorBounds) : null, monitorScale: original?.monitorBounds ? displays.find(d => sameBounds(d.bounds, original.monitorBounds))?.scaleFactor || 1 : 1 };
+    }), blocked: blocked.map(local) };
 }
 
 function publishDesktop() {
@@ -528,7 +550,7 @@ function publishDesktop() {
     if (suppressed) { overlayHitTest = false; overlayControlHitTest = false; }
     syncOverlayVisibility();
   }
-  overlayWindow.webContents.send('avatars:desktop', payload);
+  overlayWindow.webContents.send('nova:desktop', payload);
 }
 
 async function refreshAvatarLibrary() {
@@ -562,7 +584,7 @@ async function refreshAvatarLibrary() {
   avatarErrors = [...result.errors, ...validationErrors];
   assetPaths = new Map(valid.map((record) => [record.id, record.spritesheetPath]));
   if (capturePath || settingsCapturePath) {
-    process.stderr.write(`[avatars] discovered=${result.avatars.length} valid=${valid.length} errors=${JSON.stringify(avatarErrors)}\n`);
+    process.stderr.write(`[nova-fox-companion] discovered=${result.avatars.length} valid=${valid.length} errors=${JSON.stringify(avatarErrors)}\n`);
   }
 
   if (settingsStore && settings) {
@@ -571,7 +593,7 @@ async function refreshAvatarLibrary() {
     if (Object.keys(patch).length > 0) settings = await settingsStore.update(patch);
   }
 
-  broadcast('avatars:library', { avatars: publicAvatars(), errors: avatarErrors });
+  broadcast('nova:library', { avatars: publicAvatars(), errors: avatarErrors });
   broadcastSettings();
   return { avatars: publicAvatars(), errors: avatarErrors };
 }
@@ -588,13 +610,13 @@ function broadcastState() {
   const state = store.snapshot();
   for (const session of state.sessions) knownChatSessions.add(session.id);
   while (knownChatSessions.size > 100) knownChatSessions.delete(knownChatSessions.values().next().value);
-  broadcast('avatars:state', state);
+  broadcast('nova:state', state);
   companionBrain?.observe(state);
 }
 
 function broadcastSettings() {
   if (!settings) return;
-  broadcast('avatars:settings', settingsPayload(settings));
+  broadcast('nova:settings', settingsPayload(settings));
 }
 
 function settingsPayload(value) {
@@ -614,7 +636,7 @@ function previewAvatarSizes(patch) {
   if (Object.hasOwn(source, 'subagentAvatarSize')) sizes.subagentAvatarSize = source.subagentAvatarSize;
   if (Object.keys(sizes).length === 0) return;
   const preview = mergeSettings(settings, sizes);
-  overlayWindow.webContents.send('avatars:settings', settingsPayload(preview));
+  overlayWindow.webContents.send('nova:settings', settingsPayload(preview));
 }
 
 function metadataTarget(event) {
@@ -629,11 +651,12 @@ function enrichMetadata(event) {
   if (!metadataResolver || event.sessionId.startsWith('demo-')) return;
   const target = metadataTarget(event);
   if (!target || !target.id) return;
-  const key = `${event.sessionId}:${target.id}`;
+  const generation = homeGeneration;
+  const key = `${generation}:${event.sessionId}:${target.id}`;
   if (pendingMetadata.has(key)) return;
   pendingMetadata.add(key);
   void metadataResolver.resolve(target.id, { isRoot: target.isRoot, refresh: true }).then((metadata) => {
-    if (!metadata) return;
+    if (!metadata || generation !== homeGeneration) return;
     const applied = store.apply({
       kind: 'agent.metadata',
       sessionId: event.sessionId,
@@ -652,16 +675,18 @@ function enrichMetadata(event) {
     if (applied) {
       broadcastState();
     }
-  }).finally(() => pendingMetadata.delete(key));
+  }).catch(() => {}).finally(() => pendingMetadata.delete(key));
 }
 
 async function hydrateRecentAgents() {
   if (!metadataResolver) return;
   if (agentActivityRefreshPromise) return agentActivityRefreshPromise;
+  const generation = homeGeneration;
+  const resolver = metadataResolver;
   agentActivityRefreshPromise = (async () => {
     let records = [];
     try {
-      records = await readRecentAgentActivityRecords(metadataResolver.sessionsRoot, {
+      records = await readRecentAgentActivityRecords(resolver.sessionsRoot, {
         cache: recentAgentActivityCache,
         changedOnly: true,
       });
@@ -669,6 +694,7 @@ async function hydrateRecentAgents() {
       return;
     }
 
+    if (generation !== homeGeneration) return;
     const { changed, discoveredRoot } = reconcileAgentActivityRecords(store, records);
     if (changed) broadcastState();
     if (discoveredRoot) void threadTitleMonitor?.refresh();
@@ -703,8 +729,10 @@ function applyThreadTitles(titles) {
 }
 
 function handlePayload(payload) {
+  if (!matchesCodexHome(payload?.codex_home, codexHomePath())) return;
+  lastHookAt = Date.now();
   const event = normalizeHookEvent(payload);
-  if ((capturePath || settingsCapturePath) && event) process.stderr.write(`[avatars] event=${event.kind}\n`);
+  if ((capturePath || settingsCapturePath) && event) process.stderr.write(`[nova-fox-companion] event=${event.kind}\n`);
   const rootKnown = event
     ? store.hasAgent(event.sessionId, event.sessionId, true)
     : true;
@@ -733,7 +761,7 @@ function attachWindowDiagnostics(window, label) {
 function updateOverlayInputMode() {
   if (!overlayWindow || overlayWindow.isDestroyed() || !settings) return;
   const ignore = !settings.overlayEnabled || fullscreenSuppressed
-    || (!overlayControlHitTest && (settings.passive || !overlayHitTest));
+    || (!overlayChatOpen && !overlayControlHitTest && (settings.passive || !overlayHitTest));
   overlayWindow.setIgnoreMouseEvents(ignore, { forward: true });
 }
 
@@ -772,8 +800,18 @@ function syncOverlayVisibility() {
 
 async function applySettingsPatch(patch, options = {}) {
   companionBrain?.cancel();
+  companionSpeech?.cancel();
   const previousZone = JSON.stringify(settings?.zone);
+  const previousHome = codexHomePath();
   settings = await settingsStore.update(patch);
+  if (previousHome !== codexHomePath()) {
+    homeGeneration += 1;
+    if (agentActivityRefreshPromise) await agentActivityRefreshPromise;
+    pendingMetadata.clear(); recentAgentActivityCache.clear();
+    store = new AgentStore(); lastHookAt = null;
+    configureCodexReaders();
+    await refreshAvatarLibrary(); await hydrateRecentAgents(); broadcastState();
+  }
   overlayHitTest = false;
   updateOverlayInputMode();
   rebuildTrayMenu();
@@ -795,6 +833,8 @@ function createOverlayWindow() {
     : resolved.windowBounds;
   const initialBounds = bootstrapWindowBounds(targetBounds, displays);
 
+  overlayChatOpen = false;
+  overlayControlHitTest = false;
   overlayWindow = new BrowserWindow({
     ...initialBounds,
     frame: false,
@@ -809,7 +849,7 @@ function createOverlayWindow() {
     maximizable: false,
     fullscreenable: false,
     show: false,
-    focusable: false,
+    focusable: true,
     roundedCorners: false,
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
     webPreferences: {
@@ -817,6 +857,7 @@ function createOverlayWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      autoplayPolicy: 'no-user-gesture-required',
       backgroundThrottling: false,
     },
   });
@@ -931,6 +972,7 @@ function selectCustomZone() {
 
 function createSettingsWindow() {
   if (settingsWindow && !settingsWindow.isDestroyed()) return settingsWindow;
+  settingsWindowScale = 1;
   settingsWindow = new BrowserWindow({
     width: 860,
     height: 780,
@@ -1024,7 +1066,10 @@ function createTray() {
     .resize({ width: 20, height: 20 });
   tray = new Tray(icon);
   tray.setToolTip('Nova Fox Companion');
-  tray.on('click', showSettingsWindow);
+  tray.on('click', () => {
+    if (!settings.overlayEnabled) void applySettingsPatch({ overlayEnabled: true });
+    else showSettingsWindow();
+  });
   rebuildTrayMenu();
 }
 
@@ -1033,7 +1078,7 @@ function rebuildTrayMenu() {
   const french = settings.language === 'fr';
   tray.setToolTip(settings.overlayEnabled
     ? 'Nova Fox Companion'
-    : (french ? 'Nova Fox Companion — désactivés' : 'Nova Fox Companion — disabled'));
+    : (french ? 'Nova Fox Companion — désactivés' : 'Nova Fox Companion — hidden'));
   tray.setContextMenu(Menu.buildFromTemplate([
     {
       label: french ? 'Ouvrir les réglages' : 'Open settings',
@@ -1123,7 +1168,7 @@ function runDemo() {
     if (demoSessionId === sessionId) stopDemo();
   }, 13_000);
   demoTimers.add(endTimer);
-  broadcast('avatars:demo', { running: true, sessionId });
+  broadcast('nova:demo', { running: true, sessionId });
   rebuildTrayMenu();
   return { running: true, sessionId };
 }
@@ -1135,7 +1180,7 @@ function stopDemo() {
   demoSessionId = null;
   if (sessionId) store.removeSession(sessionId);
   broadcastState();
-  broadcast('avatars:demo', { running: false, sessionId: null });
+  broadcast('nova:demo', { running: false, sessionId: null });
   rebuildTrayMenu();
   return { running: false, sessionId: null };
 }
@@ -1158,7 +1203,7 @@ async function settingsBootstrapPayload() {
     displays: currentDisplays(),
     zone: currentZone(),
     launchAtLogin: getLaunchAtLogin(app, process.execPath),
-    hooks: await hooksStatus(),
+    hooks: await hooksStatus(path.join(codexHomePath(), 'hooks.json')).catch((error) => ({ installed: false, error: error.message })),
     version: app.getVersion(),
     settingsCapture: Boolean(settingsCapturePath) && !onboardingCapture,
     demo: { running: Boolean(demoSessionId), sessionId: demoSessionId },
@@ -1192,89 +1237,121 @@ function requireWindowSender(event, window, role) {
 }
 
 function registerIpc() {
-  ipcMain.handle('avatars:control-hit-test', (event, value) => {
+  ipcMain.handle('nova:control-hit-test', (event, value) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     overlayControlHitTest = Boolean(value); updateOverlayInputMode();
   });
-  ipcMain.handle('avatars:chat-focus', (event, open) => {
+  ipcMain.handle('nova:chat-focus', (event, open) => {
     requireWindowSender(event, overlayWindow, 'overlay');
-    overlayWindow.setFocusable(Boolean(open));
+    overlayChatOpen = Boolean(open);
+    updateOverlayInputMode();
     if (open && !fullscreenSuppressed) { overlayWindow.focus(); overlayWindow.webContents.focus(); }
     else overlayWindow.blur();
   });
-  ipcMain.handle('avatars:open-companion-settings', (event) => {
+  ipcMain.handle('nova:open-companion-settings', (event) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     showSettingsWindow();
   });
-  ipcMain.handle('avatars:open-companion-chat', async (event) => {
+  ipcMain.handle('nova:open-companion-chat', async (event) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     showSettingsWindow();
     if (settingsWindow && !settingsWindow.isDestroyed()) {
       await settingsWindow.webContents.executeJavaScript("document.getElementById('nova-chat-log')?.scrollIntoView({block:'center'}); document.getElementById('nova-chat-input')?.focus();");
     }
   });
-  ipcMain.handle('avatars:open-agent-chat', async (event, sessionId) => {
+  ipcMain.handle('nova:open-agent-chat', async (event, sessionId) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     if (typeof sessionId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(sessionId)
       || !knownChatSessions.has(sessionId)) return { opened: false };
     await shell.openExternal(`codex://threads/${sessionId}`);
     return { opened: true };
   });
-  ipcMain.handle('avatars:companion-history', async (event) => {
+  ipcMain.handle('nova:companion-history', async (event) => {
     requireWindowSender(event, overlayWindow, 'overlay');
-    try { return { turns: (await companionBrain.memory.read()).turns.slice(-30) }; }
+    try {
+      const memory = await companionBrain.memory.read();
+      return { turns: memory.turns.slice(-30), preferredName: memory.preferredName,
+        introduction: memory.preferredName ? null : introduction(settings.language) };
+    }
     catch { return { turns: [], error: 'Companion memory is unavailable.' }; }
   });
-  ipcMain.handle('avatars:companion-play', async (event, cue, windowId) => {
+  ipcMain.handle('nova:companion-name', async (event, value) => {
+    if (!isWindowSender(event, overlayWindow)) requireWindowSender(event, settingsWindow, 'settings');
+    companionBrain.cancel();
+    try {
+      const profile = await companionBrain.memory.setPreferredName(value, settings.language);
+      const result = { ...profile, quip: profile.reply, mood: 'amused', id: `name:${Date.now()}`, expiresAt: Date.now() + 12000 };
+      broadcast('nova:companion-profile', { preferredName: profile.preferredName });
+      broadcast('nova:companion-conversation', { text: `Call me ${profile.preferredName}.`, result,
+        origin: isWindowSender(event, overlayWindow) ? 'overlay' : 'settings' });
+      return result;
+    } catch { return { error: 'Could not save your name. Use 1–60 characters and check secure memory storage.' }; }
+  });
+  ipcMain.handle('nova:companion-play', async (event, cue, windowId) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     if (!['moved', 'peeking', 'cursor_play', 'escaped'].includes(cue)) return { skipped: 'Unknown cue.' };
     return companionBrain.generate(null, null, cue, typeof windowId === 'string' ? windowId : null);
   });
-  ipcMain.handle('avatars:companion-vision-preview', async (event) => {
+  ipcMain.handle('nova:companion-vision-preview', async (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     if (!settings.companionVisionEnabled) return { skipped: 'Enable optional window vision first.' };
     if (!lastForegroundWindowId) return { skipped: 'Focus another app first, then return to Nova.' };
     return companionBrain.generate(null, null, 'peeking', lastForegroundWindowId);
   });
-  ipcMain.handle('avatars:companion-chat', async (event, text) => {
+  ipcMain.handle('nova:companion-chat', async (event, text) => {
     if (!isWindowSender(event, overlayWindow)) requireWindowSender(event, settingsWindow, 'settings');
     const result = await companionBrain.generate(null, text);
-    if (!result.error && !result.skipped) broadcast('avatars:companion-conversation', {
+    if (!result.error && !result.skipped) broadcast('nova:companion-conversation', {
       text: text.trim(), result, origin: isWindowSender(event, overlayWindow) ? 'overlay' : 'settings',
     });
     return result;
   });
-  ipcMain.handle('avatars:companion-memory', async (event, notes) => {
+  ipcMain.handle('nova:companion-memory', async (event, notes) => {
     requireWindowSender(event, settingsWindow, 'settings');
     if (companionBrain.busy) return { error: 'Wait for the current reaction before changing memory.' };
     companionBrain.cancel();
     try {
       if (notes === null) {
         await companionBrain.memory.clear();
-        broadcast('avatars:companion-memory-cleared', {});
+        broadcast('nova:companion-memory-cleared', {});
       }
       else await companionBrain.memory.notes(notes);
       return companionBrain.status();
     } catch { return { error: 'Memory could not be updated.' }; }
   });
-  ipcMain.handle('avatars:companion-status', async (event) => {
-    requireWindowSender(event, settingsWindow, 'settings');
-    return { ...await companionBrain.status(), desktopAvailable: desktopSample.available && Date.now() - desktopSample.timestamp < 2200 };
+  ipcMain.handle('nova:hide-companion', async (event) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    return applySettingsPatch({overlayEnabled:false});
   });
-  ipcMain.handle('avatars:companion-key', async (event, key) => {
+  ipcMain.handle('nova:register-restore-link', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
-    companionBrain.cancel();
+    const args = app.isPackaged ? [] : [path.resolve(app.getAppPath())];
+    if (profileArgument) args.push(`--profile=${path.resolve(process.cwd(), profileArgument)}`);
+    const success = app.setAsDefaultProtocolClient(RESTORE_SCHEME, process.execPath, args);
+    return {registered:success, message:success ? 'Restore link enabled. Enable the Nova button in Cursadex settings after installing its update.' : 'Could not register the restore link.'};
+  });
+  ipcMain.handle('nova:speak-quip', async (event, message) => {
+    if (!isWindowSender(event, overlayWindow)) requireWindowSender(event, settingsWindow, 'settings');
+    return companionSpeech.speak(message);
+  });
+  ipcMain.handle('nova:companion-status', async (event) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    return { ...await companionBrain.status(), speech: { usage: companionSpeech.usage, error: companionSpeech.error }, integration: await integrationStatus(), desktopAvailable: desktopSample.available && Date.now() - desktopSample.timestamp < 2200 };
+  });
+  ipcMain.handle('nova:companion-key', async (event, key) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    companionBrain.cancel(); companionSpeech?.cancel();
     try {
       if (key === null) await companionKeys.remove();
       else await companionKeys.save(key);
       return companionBrain.status();
     } catch { return { error: 'Could not save the key. Check the key format and secure OS storage.' }; }
   });
-  ipcMain.handle('avatars:companion-preview', async (event) => {
+  ipcMain.handle('nova:companion-preview', async (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return companionBrain.generate();
   });
-  ipcMain.handle('avatars:companion-moved', async (event, sessionId, agentId) => {
+  ipcMain.handle('nova:companion-moved', async (event, sessionId, agentId) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     if (typeof sessionId !== 'string' || typeof agentId !== 'string') return;
     const key = `${sessionId}/${agentId}`;
@@ -1283,115 +1360,139 @@ function registerIpc() {
       await companionBrain.generate({ sessionId, agentId, key, status, cue: 'moved' });
     }
   });
-  ipcMain.handle('avatars:set-voice-muted', async (event, muted) => {
+  ipcMain.handle('nova:set-voice-muted', async (event, muted) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     await applySettingsPatch({ companionVoiceMuted: Boolean(muted) });
   });
-  ipcMain.handle('avatars:get-settings-bootstrap', (event) => {
+  ipcMain.handle('nova:get-settings-bootstrap', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return settingsBootstrapPayload();
   });
-  ipcMain.handle('avatars:get-overlay-bootstrap', (event) => {
+  ipcMain.handle('nova:get-overlay-bootstrap', (event) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     return overlayBootstrapPayload();
   });
-  ipcMain.handle('avatars:update-settings', (event, patch) => {
+  ipcMain.handle('nova:update-settings', (event, patch) => {
     requireWindowSender(event, settingsWindow, 'settings');
+    if (patch && Object.hasOwn(patch, 'codexHome')) throw new Error('Use the Codex-home picker.');
     return applySettingsPatch(patch);
   });
-  ipcMain.on('avatars:preview-avatar-sizes', (event, patch) => {
+  ipcMain.on('nova:preview-avatar-sizes', (event, patch) => {
     if (!isWindowSender(event, settingsWindow)) return;
     previewAvatarSizes(patch);
   });
-  ipcMain.handle('avatars:set-launch-at-login', (event, value) => {
+  ipcMain.handle('nova:set-launch-at-login', (event, value) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return setLaunchAtLogin(app, process.execPath, Boolean(value));
   });
-  ipcMain.handle('avatars:install-hooks', (event) => {
+  ipcMain.handle('nova:integration-status', async (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
-    return installHooks(hookScriptPath());
+    return integrationStatus();
   });
-  ipcMain.handle('avatars:uninstall-hooks', (event) => {
+  ipcMain.handle('nova:select-codex-home', async (event, useDefault) => {
     requireWindowSender(event, settingsWindow, 'settings');
-    return uninstallHooks();
+    try {
+      let selected = null;
+      if (!useDefault) {
+        const choice = await dialog.showOpenDialog(settingsWindow, { title: 'Select an existing Codex home',
+          defaultPath: codexHomePath(), properties: ['openDirectory'] });
+        if (choice.canceled || !choice.filePaths[0]) return { canceled: true };
+        selected = await validateCodexHome(choice.filePaths[0]);
+      }
+      // Do not silently strand installed hooks in the previous home.
+      const oldHooks = await hooksStatus(path.join(codexHomePath(), 'hooks.json'));
+      if (oldHooks.installed && !matchesCodexHome(resolveCodexHome(selected).path, codexHomePath())) {
+        return { error: 'Remove Nova hooks from the current home before switching. Other homes are never modified automatically.' };
+      }
+      await applySettingsPatch({ codexHome: selected });
+      return integrationStatus();
+    } catch (error) { return { error: error.message }; }
   });
-  ipcMain.handle('avatars:hooks-status', (event) => {
+  ipcMain.handle('nova:install-hooks', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
-    return hooksStatus();
+    return installHooks(hookScriptPath(), path.join(codexHomePath(), 'hooks.json'));
   });
-  ipcMain.handle('avatars:refresh-library', (event) => {
+  ipcMain.handle('nova:uninstall-hooks', (event) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    return uninstallHooks(path.join(codexHomePath(), 'hooks.json'));
+  });
+  ipcMain.handle('nova:hooks-status', (event) => {
+    requireWindowSender(event, settingsWindow, 'settings');
+    return hooksStatus(path.join(codexHomePath(), 'hooks.json'));
+  });
+  ipcMain.handle('nova:refresh-library', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return refreshAvatarLibrary();
   });
-  ipcMain.handle('avatars:open-feedback', (event) => {
+  ipcMain.handle('nova:open-feedback', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return openFeedback();
   });
-  ipcMain.handle('avatars:get-marketplace', (event, options) => {
+  ipcMain.handle('nova:get-marketplace', (event, options) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return loadMarketplace(Boolean(options?.force));
   });
-  ipcMain.handle('avatars:get-marketplace-thumbnail', (event, slug) => {
+  ipcMain.handle('nova:get-marketplace-thumbnail', (event, slug) => {
     requireWindowSender(event, settingsWindow, 'settings');
     if (!marketplaceClient) throw new Error('The marketplace is not ready yet.');
     return marketplaceClient.thumbnail(slug, { signal: AbortSignal.timeout(12_000) });
   });
-  ipcMain.handle('avatars:install-marketplace-pet', (event, slug) => {
+  ipcMain.handle('nova:install-marketplace-pet', (event, slug) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return installMarketplacePet(slug);
   });
-  ipcMain.handle('avatars:open-marketplace', (event) => {
+  ipcMain.handle('nova:open-marketplace', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return shell.openExternal(CATALOG_SITE_URL);
   });
-  ipcMain.handle('avatars:open-marketplace-pet', async (event, slug) => {
+  ipcMain.handle('nova:open-marketplace-pet', async (event, slug) => {
     requireWindowSender(event, settingsWindow, 'settings');
     const safeSlug = safeCatalogSlug(slug);
     const record = await marketplaceClient.record(safeSlug, { signal: AbortSignal.timeout(12_000) });
     return shell.openExternal(record.detailsUrl);
   });
-  ipcMain.handle('avatars:report-marketplace-pet', (event, slug, payload) => {
+  ipcMain.handle('nova:report-marketplace-pet', (event, slug, payload) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return openMarketplacePetReport(slug, payload);
   });
-  ipcMain.handle('avatars:open-submission-guide', (event) => {
+  ipcMain.handle('nova:open-submission-guide', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return shell.openExternal(CATALOG_GUIDE_URL);
   });
-  ipcMain.handle('avatars:get-marketplace-submission-status', (event) => {
+  ipcMain.handle('nova:get-marketplace-submission-status', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return marketplaceSubmissionStatus();
   });
-  ipcMain.handle('avatars:connect-marketplace-github', (event) => {
+  ipcMain.handle('nova:connect-marketplace-github', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return connectMarketplaceGithub();
   });
-  ipcMain.handle('avatars:open-marketplace-github-authorization', (event) => {
+  ipcMain.handle('nova:open-marketplace-github-authorization', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return shell.openExternal(GITHUB_DEVICE_AUTHORIZATION_URL);
   });
-  ipcMain.handle('avatars:copy-marketplace-github-device-code', (event, value) => {
+  ipcMain.handle('nova:copy-marketplace-github-device-code', (event, value) => {
     requireWindowSender(event, settingsWindow, 'settings');
     const code = normalizeGitHubDeviceCode(value);
     if (!code) throw new Error('GitHub returned an invalid one-time code.');
     clipboard.writeText(code);
     return { copied: true };
   });
-  ipcMain.handle('avatars:cancel-marketplace-github', (event) => {
+  ipcMain.handle('nova:cancel-marketplace-github', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return cancelMarketplaceGithubConnection();
   });
-  ipcMain.handle('avatars:submit-marketplace-pet', (event, payload) => {
+  ipcMain.handle('nova:submit-marketplace-pet', (event, payload) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return submitMarketplacePetDirectly(payload);
   });
-  ipcMain.handle('avatars:overlay-hit-test', (event, value) => {
+  ipcMain.handle('nova:overlay-hit-test', (event, value) => {
     requireWindowSender(event, overlayWindow, 'overlay');
     overlayHitTest = Boolean(value);
     updateOverlayInputMode();
     return settings.overlayEnabled && !settings.passive && overlayHitTest;
   });
-  ipcMain.handle('avatars:create-avatar', async (event, brief) => {
+  ipcMain.handle('nova:create-avatar', async (event, brief) => {
     requireWindowSender(event, settingsWindow, 'settings');
     const prompt = buildAvatarPrompt(brief, settings.language);
     const url = codexNewThreadUrl(prompt);
@@ -1403,30 +1504,30 @@ function registerIpc() {
       return { opened: false, copied: true, message: error.message };
     }
   });
-  ipcMain.handle('avatars:copy-create-prompt', (event, brief) => {
+  ipcMain.handle('nova:copy-create-prompt', (event, brief) => {
     requireWindowSender(event, settingsWindow, 'settings');
     const prompt = buildAvatarPrompt(brief, settings.language);
     clipboard.writeText(prompt);
     return prompt;
   });
-  ipcMain.handle('avatars:pick-zone', async (event) => {
+  ipcMain.handle('nova:pick-zone', async (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     const rectangle = await selectCustomZone();
     if (!rectangle) return { cancelled: true };
     const next = await applySettingsPatch({ zone: { mode: 'custom', custom: rectangle } }, { rebuildOverlay: true });
     return { cancelled: false, rectangle, settings: next };
   });
-  ipcMain.handle('avatars:zone-picker-complete', (event, rectangle) => {
+  ipcMain.handle('nova:zone-picker-complete', (event, rectangle) => {
     requireWindowSender(event, zonePickerWindow, 'zone picker');
     settleZonePicker(rectangle);
     return true;
   });
-  ipcMain.handle('avatars:zone-picker-cancel', (event) => {
+  ipcMain.handle('nova:zone-picker-cancel', (event) => {
     requireWindowSender(event, zonePickerWindow, 'zone picker');
     settleZonePicker(null);
     return true;
   });
-  ipcMain.handle('avatars:import-pet', async (event) => {
+  ipcMain.handle('nova:import-pet', async (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     const options = {
       title: settings.language === 'fr' ? 'Importer un Pet' : 'Import a Pet',
@@ -1444,7 +1545,7 @@ function registerIpc() {
     await refreshAvatarLibrary();
     return { cancelled: false, imported };
   });
-  ipcMain.handle('avatars:export-pet', async (event, avatarId) => {
+  ipcMain.handle('nova:export-pet', async (event, avatarId) => {
     requireWindowSender(event, settingsWindow, 'settings');
     const record = avatarRecords.find((avatar) => avatar.id === avatarId);
     if (!record) throw new Error('The selected Pet is no longer available.');
@@ -1461,22 +1562,50 @@ function registerIpc() {
     await exportPetPackage(record, result.filePath);
     return { cancelled: false, filePath: result.filePath };
   });
-  ipcMain.handle('avatars:open-pets-doc', (event) => {
+  ipcMain.handle('nova:open-pets-doc', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return shell.openExternal('https://learn.chatgpt.com/docs/pets');
   });
-  ipcMain.handle('avatars:open-plugin', (event) => {
+  ipcMain.handle('nova:open-plugin', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return openPluginInCodex();
   });
-  ipcMain.handle('avatars:open-pet-directory', (event) => {
+  ipcMain.handle('nova:open-pet-directory', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return shell.openPath(path.join(codexHomePath(), 'pets'));
   });
-  ipcMain.handle('avatars:demo', (event) => {
+  ipcMain.handle('nova:demo', (event) => {
     requireWindowSender(event, settingsWindow, 'settings');
     return toggleDemo();
   });
+}
+
+function configureCodexReaders() {
+  threadTitleMonitor?.close();
+  metadataResolver = new AgentMetadataResolver(path.join(codexHomePath(), 'sessions'));
+  threadTitleMonitor = new ThreadTitleMonitor(metadataResolver.threadIndexPath, {
+    getThreadIds: activeThreadIds,
+    readTitles: (threadIds) => metadataResolver.refreshThreadNames(threadIds),
+    onTitles: applyThreadTitles,
+  });
+  threadTitleMonitor.start();
+}
+
+async function integrationStatus() {
+  const home = resolveCodexHome(settings?.codexHome);
+  let available = false;
+  try { available = (await fs.stat(home.path)).isDirectory(); } catch { }
+  let hooks;
+  try { hooks = await hooksStatus(path.join(home.path, 'hooks.json')); }
+  catch (error) { hooks = { installed: false, error: error.message }; }
+  return { home: home.path, source: home.source, available, hooks, bridgeError, lastHookAt,
+    bridge: bridgeError ? 'unavailable' : 'listening',
+    help: 'Waiting for events is normal when Codex is closed or idle. Nova never launches Codex automatically.' };
+}
+
+async function listenForHooks() {
+  try { await eventServer.listen(); bridgeError = null; }
+  catch { bridgeError = 'Nova’s local bridge is unavailable or already in use. Retrying in 5 seconds.'; }
 }
 
 async function startApplication() {
@@ -1493,8 +1622,10 @@ async function startApplication() {
       return captureWindow({ script: app.isPackaged ? path.join(process.resourcesPath, 'hooks', 'capture-window.ps1')
         : path.join(app.getAppPath(), 'scripts', 'capture-window.ps1'), window, signal });
     },
-    getSettings: () => settings, emit: (reaction) => broadcast('avatars:reaction', reaction) });
+    getSettings: () => settings, emit: (reaction) => broadcast('nova:reaction', reaction) });
   await companionBrain.load();
+  companionSpeech = new CompanionSpeech({ directory: app.getPath('userData'), keys: companionKeys, getSettings: () => settings });
+  await companionSpeech.load();
   companionBrain.observe(store.snapshot());
   marketplaceClient = new MarketplaceClient({
     cacheDirectory: path.join(app.getPath('userData'), 'marketplace-cache'),
@@ -1515,15 +1646,9 @@ async function startApplication() {
     configDirectory: path.join(app.getPath('userData'), 'github-cli-config'),
   });
   githubPublisher = new GitHubMarketplacePublisher({ github: githubCli });
-  metadataResolver = new AgentMetadataResolver(path.join(codexHomePath(), 'sessions'));
-  threadTitleMonitor = new ThreadTitleMonitor(metadataResolver.threadIndexPath, {
-    getThreadIds: activeThreadIds,
-    readTitles: (threadIds) => metadataResolver.refreshThreadNames(threadIds),
-    onTitles: applyThreadTitles,
-  });
-  threadTitleMonitor.start();
+  configureCodexReaders();
 
-  protocol.handle('codex-avatar', async (request) => {
+  protocol.handle('nova-fox-companion', async (request) => {
     try {
       const url = new URL(request.url);
       if (url.hostname !== 'asset') return new Response('Not found', { status: 404 });
@@ -1539,7 +1664,8 @@ async function startApplication() {
 
   registerIpc();
   await refreshAvatarLibrary();
-  await eventServer.listen();
+  await listenForHooks();
+  bridgeRetryTimer = setInterval(() => { if (bridgeError) void listenForHooks(); }, 5000);
   await hydrateRecentAgents();
   createTray();
   createOverlayWindow();
@@ -1549,6 +1675,18 @@ async function startApplication() {
       : path.join(app.getAppPath(), 'scripts', 'desktop-sensor.ps1'),
     convert: (rect) => screen.screenToDipRect(null, rect),
     onSample: (sample) => {
+      nativeDisplayScales = sample.scales || nativeDisplayScales;
+      if (settingsWindow && !settingsWindow.isDestroyed()) {
+        const matched = screen.getDisplayMatching(settingsWindow.getBounds());
+        const scale = nativeDisplayScales.find(d => sameBounds(d, matched.bounds))?.scaleFactor || 1;
+        if (scale !== settingsWindowScale) {
+          const ratio = scale / settingsWindowScale, before = settingsWindow.getBounds();
+          settingsWindow.webContents.setZoomFactor(scale);
+          settingsWindow.setMinimumSize(Math.round(720*scale),Math.round(620*scale));
+          settingsWindow.setSize(Math.min(matched.workArea.width, Math.round(before.width*ratio)),Math.min(matched.workArea.height, Math.round(before.height*ratio)));
+          settingsWindow.center(); settingsWindowScale = scale;
+        }
+      }
       desktopSample = sample;
       lastForegroundWindowId = sample.windows.find((window) => window.foreground)?.id || lastForegroundWindowId;
       publishDesktop();
@@ -1584,13 +1722,16 @@ async function startApplication() {
   }, 1_000);
   agentActivityTimer = setInterval(() => void hydrateRecentAgents(), 1_500);
   avatarRefreshTimer = setInterval(() => void refreshAvatarLibrary(), 5_000);
+  if (process.argv.some(isRestoreLink)) await applySettingsPatch({overlayEnabled:true});
 }
 
 if (commandLineAction) {
   app.whenReady().then(async () => {
     try {
-      if (commandLineAction === 'install') await installHooks(hookScriptPath());
-      else await uninstallHooks();
+      settingsStore = new SettingsStore(path.join(app.getPath('userData'), 'settings.json'));
+      settings = await settingsStore.load();
+      if (commandLineAction === 'install') await installHooks(hookScriptPath(), path.join(codexHomePath(), 'hooks.json'));
+      else await uninstallHooks(path.join(codexHomePath(), 'hooks.json'));
       app.exit(0);
     } catch {
       app.exit(1);
@@ -1601,7 +1742,12 @@ if (commandLineAction) {
   if (!hasLock) app.quit();
 
   if (hasLock) {
-    app.on('second-instance', showSettingsWindow);
+    app.on('second-instance', (_event, argv) => {
+      if (argv.some(isRestoreLink)) {
+        if (settingsStore) void applySettingsPatch({overlayEnabled:true});
+      } else showSettingsWindow();
+    });
+    app.on('open-url', (event, url) => {event.preventDefault();if(isRestoreLink(url)&&settingsStore)void applySettingsPatch({overlayEnabled:true});});
     app.on('activate', showSettingsWindow);
     app.whenReady().then(startApplication);
   }
@@ -1611,12 +1757,13 @@ app.on('window-all-closed', () => {
   // The tray owns the process lifetime. Closing settings never removes the avatars.
 });
 app.on('before-quit', () => {
-  companionBrain?.cancel();
+  companionBrain?.cancel(); companionSpeech?.cancel();
   isQuitting = true;
 });
 app.on('will-quit', () => {
   desktopSensor?.stop();
   if (desktopTimer) clearInterval(desktopTimer);
+  if (bridgeRetryTimer) clearInterval(bridgeRetryTimer);
   if (cleanupTimer) clearInterval(cleanupTimer);
   if (agentActivityTimer) clearInterval(agentActivityTimer);
   if (avatarRefreshTimer) clearInterval(avatarRefreshTimer);

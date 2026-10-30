@@ -13,7 +13,7 @@ const {
   setLaunchAtLogin,
 } = require('../src/core/login-item.cjs');
 
-const EXECUTABLE = 'C:\\Users\\Test\\AppData\\Local\\Programs\\Codex Avatars\\Codex Avatars.exe';
+const EXECUTABLE = 'C:\\Users\\Test\\AppData\\Local\\Programs\\Nova Fox Companion\\Nova Fox Companion.exe';
 
 class FakeElectronApp {
   constructor(items = [], statusOverrides = {}) {
@@ -121,7 +121,7 @@ test('reports a StartupApproved-disabled canonical item as disabled', () => {
 });
 
 test('detects an enabled legacy item even when Electron omits launchItems', () => {
-  const app = new FakeElectronApp([item('Codex Avatars')], {
+  const app = new FakeElectronApp([item('Nova Fox Companion')], {
     openAtLogin: false,
     executableWillLaunchAtLogin: false,
     launchItems: [],
@@ -131,18 +131,18 @@ test('detects an enabled legacy item even when Electron omits launchItems', () =
 
 test('enabling removes legacy duplicates and writes one enabled canonical item', () => {
   const app = new FakeElectronApp([
-    item('Codex Avatars', { enabled: false }),
+    item('Nova Fox Companion', { enabled: false }),
     item(LOGIN_ITEM_NAME, { enabled: false }),
   ], { launchItems: [] });
   assert.equal(setLaunchAtLogin(app, EXECUTABLE, true, optionsFor(app)), true);
   assert.deepEqual(app.items, [item(LOGIN_ITEM_NAME)]);
 });
 
-test('disabling removes only the two Codex Avatars user entries', () => {
+test('disabling removes only the two Nova Fox Companion user entries', () => {
   const otherExecutable = 'C:\\Tools\\Unrelated.exe';
   const custom = item('User custom Codex entry');
   const app = new FakeElectronApp([
-    item('Codex Avatars'),
+    item('Nova Fox Companion'),
     item(LOGIN_ITEM_NAME),
     custom,
     { name: 'Unrelated', path: otherExecutable, args: ['--background'] },
@@ -155,7 +155,7 @@ test('disabling removes only the two Codex Avatars user entries', () => {
 });
 
 test('startup migration detects hidden duplicates and preserves enabled state', () => {
-  const app = new FakeElectronApp([item('Codex Avatars'), item(LOGIN_ITEM_NAME)], {
+  const app = new FakeElectronApp([item('Nova Fox Companion'), item(LOGIN_ITEM_NAME)], {
     executableWillLaunchAtLogin: false,
     launchItems: [],
   });
@@ -164,7 +164,7 @@ test('startup migration detects hidden duplicates and preserves enabled state', 
 });
 
 test('startup migration preserves a Windows-disabled legacy item', () => {
-  const app = new FakeElectronApp([item('Codex Avatars', { enabled: false })], {
+  const app = new FakeElectronApp([item('Nova Fox Companion', { enabled: false })], {
     openAtLogin: true,
     executableWillLaunchAtLogin: false,
     launchItems: [],
@@ -182,7 +182,7 @@ test('startup migration leaves an already canonical registration untouched', () 
 test('machine and unrelated executable entries are never removed', () => {
   const app = new FakeElectronApp([
     item('Machine Codex', { scope: 'machine' }),
-    { name: 'Codex Avatars Copy', path: 'C:\\Another App\\app.exe', args: ['--background'] },
+    { name: 'Nova Fox Companion Copy', path: 'C:\\Another App\\app.exe', args: ['--background'] },
   ]);
   setLaunchAtLogin(app, EXECUTABLE, false, optionsFor(app));
   assert.equal(app.items.length, 2);
@@ -191,12 +191,12 @@ test('machine and unrelated executable entries are never removed', () => {
 });
 
 test('parses REG_SZ and UTF-16 REG_BINARY query output', () => {
-  const runOutput = `\r\nHKEY_CURRENT_USER\\Software\\Example\r\n    Codex Avatars    REG_SZ    "${EXECUTABLE}" --background\r\n`;
-  assert.deepEqual(parseRegistryQueryOutput(Buffer.from(runOutput, 'utf8'), 'Codex Avatars'), {
+  const runOutput = `\r\nHKEY_CURRENT_USER\\Software\\Example\r\n    Nova Fox Companion    REG_SZ    "${EXECUTABLE}" --background\r\n`;
+  assert.deepEqual(parseRegistryQueryOutput(Buffer.from(runOutput, 'utf8'), 'Nova Fox Companion'), {
     type: 'REG_SZ',
     data: `"${EXECUTABLE}" --background`,
   });
-  const approvedOutput = '\r\nHKEY_CURRENT_USER\\Software\\Example\r\n    dev.codexavatars.desktop    REG_BINARY    030000000000000000000000\r\n';
+  const approvedOutput = '\r\nHKEY_CURRENT_USER\\Software\\Example\r\n    dev.novafoxcompanion.desktop    REG_BINARY    030000000000000000000000\r\n';
   assert.deepEqual(
     parseRegistryQueryOutput(Buffer.from(approvedOutput, 'utf16le'), LOGIN_ITEM_NAME),
     { type: 'REG_BINARY', data: '030000000000000000000000' },

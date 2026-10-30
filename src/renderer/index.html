@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: file: codex-avatar:; connect-src 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: file: nova-fox-companion:; connect-src 'none'; media-src data:">
     <title>Nova Fox Companion</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
@@ -32,6 +32,19 @@
     </header>
 
     <main class="settings-layout">
+      <section class="panel" aria-labelledby="nova-integration-title">
+        <h2 id="nova-integration-title">Codex connection</h2>
+        <p id="nova-home-path"></p>
+        <p id="nova-integration-status" role="status"></p>
+        <details><summary>Connection details</summary><p id="nova-integration-detail"></p></details>
+        <div class="button-row">
+          <button class="quiet-button" id="nova-pick-home" type="button">Choose Codex home…</button>
+          <button class="quiet-button" id="nova-default-home" type="button">Use environment / default</button>
+          <button class="quiet-button" id="nova-check-integration" type="button">Check connection</button>
+        </div>
+        <p>Select the existing Codex data folder you want Nova to follow. Choosing a home does not install hooks or modify other profiles.</p>
+        <p>Hook changes need review and trust in Codex. Waiting for events is normal while Codex is idle or closed.</p>
+      </section>
       <section class="panel" id="companion-panel" aria-labelledby="companion-title">
         <p class="eyebrow">NOVA FOX COMPANION</p>
         <h2 id="companion-title">Personality &amp; voice</h2>
@@ -51,10 +64,14 @@
             <option value="gpt-6.1-terra">GPT-6.1 Terra</option>
             <option value="gpt-6.1-sol">GPT-6.1 Sol</option>
           </select></label>
+          <label>Voice provider<select id="nova-voice-provider"><option value="local">Local system voice</option><option value="cloud">Natural cloud voice · separate API usage</option></select></label>
+          <label>Cloud voice<select id="nova-speech-voice"><option value="marin">Marin</option><option value="coral">Coral</option><option value="shimmer">Shimmer</option><option value="sage">Sage</option><option value="cedar">Cedar</option></select></label>
+          <label>Daily speech request limit<input id="nova-speech-limit" type="number" min="1" max="200"></label>
           <label>Seconds between quips<input id="nova-cooldown" type="number" min="20" max="600"></label>
           <label>Daily request limit<input id="nova-limit" type="number" min="1" max="500"></label>
           <label>Daily local budget guard (USD)<input id="nova-budget" type="number" min="0.001" max="10" step="0.001"></label>
         </div>
+        <p class="nova-help">Nova’s voice is AI-generated. Cloud voice sends only the short one-liner to OpenAI using your saved API key, with separate speech charges and a daily request cap. Audio stays in memory. No microphone is used. Failed speech stays silent; it does not fall back to the system voice.</p><p id="nova-speech-usage" class="nova-help"></p>
         <p class="nova-help">Ordinary cloud requests send a status cue, personality, language, your saved notes, and recent direct conversations with Nova to OpenAI. They do not read other agents’ transcript files. Optional window vision can also send the selected window image when separately enabled; see its controls below. Each attempt reserves a conservative model-dependent amount locally, including previews and failures. This estimate is not a provider billing cap; set a provider-side limit too. Daily counters reset at midnight Pacific time.</p>
         <div class="nova-key-row">
           <label>OpenAI API key<input id="nova-key" type="password" autocomplete="off" spellcheck="false" placeholder="Enter key to replace it"></label>
@@ -66,6 +83,8 @@
         <label class="nova-notes">Never capture these apps · process names, comma-separated<input id="nova-excluded-apps" placeholder="1password, bitwarden, keepass, lockapp"></label>
         <button id="nova-vision-preview" type="button" class="quiet-button">Peek at last active app</button>
         <button id="nova-preview" type="button" class="primary-button">Preview a reaction</button>
+        <button id="nova-voice-preview" type="button" class="quiet-button">Hear Nova’s voice</button>
+        <button id="nova-restore-link" type="button" class="quiet-button">Enable Cursadex restore link</button>
         <button id="nova-mute" type="button" class="quiet-button">Mute voice</button>
         <p id="nova-connection" role="status" aria-live="polite"></p>
         <p id="nova-preview-result" role="status" aria-live="polite"></p>
@@ -76,6 +95,8 @@
         <button id="nova-clear-memory" type="button" class="quiet-button">Clear all companion memory</button>
         <div id="nova-chat-log" class="nova-chat-log" role="log" aria-live="polite"></div>
         <form id="nova-chat-form" class="nova-key-row">
+          <label>What Nova calls you<input id="nova-name" maxlength="120" autocomplete="off" placeholder="Your preferred name"></label>
+          <button id="nova-save-name" type="button">Save name</button>
           <label>Talk to Nova<input id="nova-chat-input" maxlength="500" autocomplete="off" placeholder="Tell Nova something…"></label>
           <button id="nova-chat-send" type="submit" class="primary-button">Send</button>
         </form>

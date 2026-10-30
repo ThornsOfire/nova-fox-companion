@@ -15,10 +15,10 @@ if (-not (Test-Path -LiteralPath $packagePath -PathType Leaf)) {
     throw "package.json was not found at $packagePath"
 }
 if (-not (Test-Path -LiteralPath $marketplacePath -PathType Leaf)) {
-    throw "The Codex Avatars marketplace was not found at $marketplacePath"
+    throw "The Nova Fox Companion marketplace was not found at $marketplacePath"
 }
 
-Write-Host "Codex Avatars setup" -ForegroundColor Cyan
+Write-Host "Nova Fox Companion setup" -ForegroundColor Cyan
 Write-Host "Repository: $repoRoot"
 
 if (-not $SkipDependencies) {
@@ -32,24 +32,24 @@ if (-not $SkipDependencies) {
     }
 }
 
-if ($PSCmdlet.ShouldProcess("User environment", "Register CODEX_AVATARS_DEV_ROOT")) {
-    [Environment]::SetEnvironmentVariable("CODEX_AVATARS_DEV_ROOT", $repoRoot, "User")
-    $env:CODEX_AVATARS_DEV_ROOT = $repoRoot
+if ($PSCmdlet.ShouldProcess("User environment", "Register NOVA_FOX_COMPANION_DEV_ROOT")) {
+    [Environment]::SetEnvironmentVariable("NOVA_FOX_COMPANION_DEV_ROOT", $repoRoot, "User")
+    $env:NOVA_FOX_COMPANION_DEV_ROOT = $repoRoot
 }
 
 if (-not $SkipPlugin) {
     $codex = Get-Command codex -ErrorAction SilentlyContinue
     if ($null -eq $codex) {
         Write-Warning "Codex CLI was not found. Open Plugins in the ChatGPT desktop app after restarting it; the repo marketplace is already present."
-    } elseif ($PSCmdlet.ShouldProcess("Codex", "Add the local marketplace and install codex-avatars")) {
+    } elseif ($PSCmdlet.ShouldProcess("Codex", "Add the local marketplace and install nova-fox-companion")) {
         try {
             & $codex.Source plugin marketplace add $repoRoot
             if ($LASTEXITCODE -ne 0) { throw "marketplace add exited with $LASTEXITCODE" }
-            & $codex.Source plugin add "codex-avatars@codex-avatars-local"
+            & $codex.Source plugin add "nova-fox-companion@nova-fox-companion-local"
             if ($LASTEXITCODE -ne 0) { throw "plugin add exited with $LASTEXITCODE" }
         } catch {
             Write-Warning "Automatic plugin installation did not complete: $($_.Exception.Message)"
-            Write-Warning "Restart ChatGPT, open Plugins, choose 'Codex Avatars Local', and install Codex Avatars."
+            Write-Warning "Restart ChatGPT, open Plugins, choose 'Nova Fox Companion Local', and install Nova Fox Companion."
         }
     }
 }
@@ -58,12 +58,12 @@ if (-not $NoStart) {
     if (-not (Test-Path -LiteralPath $electronPath -PathType Leaf) -and -not $WhatIfPreference) {
         throw "Electron was not installed at $electronPath"
     }
-    if ($PSCmdlet.ShouldProcess("Codex Avatars", "Start the background companion")) {
+    if ($PSCmdlet.ShouldProcess("Nova Fox Companion", "Start the background companion")) {
         Start-Process -FilePath $electronPath -ArgumentList @($repoRoot, "--background") -WindowStyle Hidden
     }
 }
 
 Write-Host ""
 Write-Host "Setup prepared." -ForegroundColor Green
-Write-Host "Restart ChatGPT, enable Codex Avatars in Plugins, and trust its lifecycle hooks when prompted."
+Write-Host "Restart ChatGPT, enable Nova Fox Companion in Plugins, and trust its lifecycle hooks when prompted."
 Write-Host "The tray icon remains available even while passive mode is enabled."

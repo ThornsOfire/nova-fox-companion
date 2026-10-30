@@ -1,6 +1,6 @@
 # V2 marketplace and `.codexpet` packages
 
-Codex Avatars merges its controlled [catalog fork](https://github.com/Kajdrak2/awesome-codex-pet) with the original third-party [Awesome Codex Pet](https://github.com/legeling/awesome-codex-pet) community catalog. It is not an official OpenAI marketplace. The controlled fork has priority; matching ids and exact spritesheet hashes are deduplicated, while different assets sharing a canonical character identity remain visible as variants. Each source is fetched and cached independently. The app filters both integrity manifests to native V2 Pets and installs a selected Pet only after its bytes, SHA-256 hashes, manifest, and `1536x2288` atlas have all been checked.
+Nova Fox Companion merges its controlled [catalog fork](https://github.com/Kajdrak2/awesome-codex-pet) with the original third-party [Awesome Codex Pet](https://github.com/legeling/awesome-codex-pet) community catalog. It is not an official OpenAI marketplace. The controlled fork has priority; matching ids and exact spritesheet hashes are deduplicated, while different assets sharing a canonical character identity remain visible as variants. Each source is fetched and cached independently. The app filters both integrity manifests to native V2 Pets and installs a selected Pet only after its bytes, SHA-256 hashes, manifest, and `1536x2288` atlas have all been checked.
 
 The portable `.codexpet` format remains available for direct sharing and local backups: export a Pet from its card, send the resulting file through a channel of your choice, and import it from settings.
 
@@ -29,4 +29,4 @@ Every marketplace card includes **Report**. The app accepts one fixed reason and
 
 For advanced manual contribution, follow the controlled catalog's [contribution guide](https://github.com/Kajdrak2/awesome-codex-pet/blob/main/CONTRIBUTING.md). Do not submit Hatch Pet run folders, prompts, references, generated catalog indexes, or unrelated files.
 
-Publication automation, moderation, signing, takedowns, and license review remain owned by the controlled catalog and contributor. Imported original-catalog entries retain their upstream authorship and license terms. Codex Avatars provides deterministic preflight, protected CI gates, a consent-gated GitHub bridge, and a public reporting path—not automated visual or legal judgment.
+Publication automation, moderation, signing, takedowns, and license review remain owned by the controlled catalog and contributor. Imported original-catalog entries retain their upstream authorship and license terms. Nova Fox Companion provides deterministic preflight, protected CI gates, a consent-gated GitHub bridge, and a public reporting path—not automated visual or legal judgment.

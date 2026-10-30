@@ -18,5 +18,5 @@ test('NSIS installer bundles the plugin and invokes reversible integration hooks
   assert.match(installer, /--install-hooks/);
   assert.match(installer, /!macro customUnInstall/);
   assert.match(installer, /--uninstall-hooks/);
-  assert.match(installer, /CODEX_AVATARS_APP/);
+  assert.match(installer, /NOVA_FOX_COMPANION_APP/);
 });

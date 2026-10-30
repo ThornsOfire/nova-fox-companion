@@ -19,7 +19,7 @@ function webpHeader(width = 1536, height = 2288) {
 }
 
 test('exports and imports a portable Pet without overwriting an existing id', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-package-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-package-'));
   const source = path.join(root, 'source', 'minuit');
   const destination = path.join(root, 'pets');
   await fs.mkdir(source, { recursive: true });
@@ -37,7 +37,7 @@ test('exports and imports a portable Pet without overwriting an existing id', as
 });
 
 test('rejects an invalid atlas and leaves no destination behind', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-bad-package-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-bad-package-'));
   const archivePath = path.join(root, 'bad.codexpet');
   const archive = new AdmZip();
   archive.addFile('pet.json', Buffer.from(JSON.stringify({ id: 'bad', displayName: 'Bad', spriteVersionNumber: 2, spritesheetPath: 'spritesheet.webp' })));
@@ -50,7 +50,7 @@ test('rejects an invalid atlas and leaves no destination behind', async () => {
 });
 
 test('rejects nested and case-duplicate archive entries', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-unsafe-package-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-unsafe-package-'));
   const nestedPath = path.join(root, 'nested.zip');
   const nested = new AdmZip();
   nested.addFile('folder/pet.json', Buffer.from('{}'));
@@ -67,7 +67,7 @@ test('rejects nested and case-duplicate archive entries', async () => {
 });
 
 test('installs verified buffers atomically and rejects a marketplace id collision', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-buffer-install-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-buffer-install-'));
   const pets = path.join(root, 'pets');
   const manifest = Buffer.from(JSON.stringify({
     id: 'market-fox', displayName: 'Market Fox', spriteVersionNumber: 2, spritesheetPath: 'spritesheet.webp',
@@ -79,6 +79,6 @@ test('installs verified buffers atomically and rejects a marketplace id collisio
     installPetBuffers(manifest, webpHeader(), pets, { requestedId: 'market-fox', collision: 'reject' }),
     (error) => error.code === 'PET_ID_CONFLICT',
   );
-  assert.deepEqual((await fs.readdir(pets)).filter((name) => name.startsWith('.codex-avatars-import-')), []);
+  assert.deepEqual((await fs.readdir(pets)).filter((name) => name.startsWith('.nova-fox-companion-import-')), []);
   await fs.rm(root, { recursive: true, force: true });
 });

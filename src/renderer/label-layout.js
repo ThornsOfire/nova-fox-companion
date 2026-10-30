@@ -1,7 +1,7 @@
 (function labelLayoutModule(root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
-  if (root) root.CodexAvatarLabelLayout = api;
+  if (root) root.NovaFoxCompanionLabelLayout = api;
 }(typeof globalThis !== 'undefined' ? globalThis : this, () => {
   function labelLayout(settings, hasDetails) {
     const showName = Boolean(settings?.showLabels);

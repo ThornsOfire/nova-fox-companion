@@ -15,7 +15,7 @@ test('normalizes unsafe or out-of-range settings', () => {
   });
   assert.equal(settings.mainAvatarSize, 180);
   assert.equal(settings.subagentAvatarSize, 180);
-  assert.equal(settings.schemaVersion, 8);
+  assert.equal(settings.schemaVersion, 10);
   assert.equal(settings.language, 'en');
   assert.equal(settings.overlayEnabled, true);
   assert.equal(settings.showAgentDetails, true);
@@ -54,7 +54,7 @@ test('defaults to matching the main agent and permits random Pet distribution', 
 });
 
 test('persists a deep zone patch atomically', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatars-settings-'));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-settings-'));
   const filePath = path.join(directory, 'settings.json');
   const store = new SettingsStore(filePath);
   await store.load();
@@ -73,7 +73,7 @@ test('persists a deep zone patch atomically', async () => {
 });
 
 test('serializes concurrent updates without losing either setting', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatars-settings-race-'));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-settings-race-'));
   const filePath = path.join(directory, 'settings.json');
   const store = new SettingsStore(filePath);
   await store.load();
@@ -100,7 +100,7 @@ test('migrates the former shared avatar size to both agent roles', () => {
 });
 
 test('persists the dormant-agent visibility preference', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatars-dormant-setting-'));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-dormant-setting-'));
   const filePath = path.join(directory, 'settings.json');
   const store = new SettingsStore(filePath);
   await store.load();

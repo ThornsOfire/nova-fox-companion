@@ -1,16 +1,16 @@
 name: Bug report
-description: Report a reproducible problem in Codex Avatars
+description: Report a reproducible problem in Nova Fox Companion
 title: "[Bug] "
 labels:
   - bug
 body:
   - type: markdown
     attributes:
-      value: Thanks for helping improve Codex Avatars. Remove secrets and personal data from screenshots or logs.
+      value: Thanks for helping improve Nova Fox Companion. Remove secrets and personal data from screenshots or logs.
   - type: input
     id: version
     attributes:
-      label: Codex Avatars version
+      label: Nova Fox Companion version
       placeholder: e.g. 0.7.0-beta.7
     validations:
       required: true

@@ -1,7 +1,7 @@
 'use strict';
 
-const PIPE_NAME = 'codex-avatars-v1';
-const HOOK_MARKER = 'CODEX_AVATARS_HOOK_V1';
+const PIPE_NAME = 'nova-fox-companion-v1';
+const HOOK_MARKER = 'NOVA_FOX_COMPANION_HOOK_V1';
 const COMPLETION_GRACE_MS = 7_000;
 const DORMANT_RETENTION_MS = 30 * 60 * 1_000;
 const MAX_DORMANT_AGENTS = 50;

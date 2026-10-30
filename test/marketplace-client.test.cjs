@@ -198,7 +198,7 @@ test('merges both catalogs, lets the controlled fork win, and preserves real var
 });
 
 test('loads both network catalogs and falls back to validated stale per-source cache', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-marketplace-cache-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-marketplace-cache-'));
   const data = fixture();
   let now = 1_000_000;
   const first = new MarketplaceClient({ cacheDirectory: root, fetchImpl: catalogFetch(data), now: () => now, cacheTtlMs: 100 });
@@ -248,7 +248,7 @@ test('downloads a winning Pet from its actual source and verifies every byte', a
 });
 
 test('generates and caches a local preview when a fork-only Pet has no upstream thumbnail', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-marketplace-thumbnail-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-marketplace-thumbnail-'));
   const data = fixture();
   let renderedSpritesheet = null;
   const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01]);
@@ -271,7 +271,7 @@ test('generates and caches a local preview when a fork-only Pet has no upstream 
 });
 
 test('caches the verified WebP atlas when the packaged runtime cannot render a PNG preview', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-avatar-marketplace-atlas-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fox-companion-marketplace-atlas-'));
   const data = fixture();
   let renderAttempts = 0;
   const client = new MarketplaceClient({
@@ -306,7 +306,7 @@ test('the marketplace renderer crops cached atlas fallbacks to one V2 frame', as
   assert.match(styles, /height:\s*1100%/);
   assert.match(styles, /translateX\(-6\.25%\)/);
   assert.match(styles, /clip-path:\s*inset\(0 87\.5% 90\.9090909% 0\)/);
-  assert.match(markup, /img-src 'self' data: file: codex-avatar:/);
+  assert.match(markup, /img-src 'self' data: file: nova-fox-companion:/);
 });
 
 test('builds a deduplicated all-version index across both catalogs', async () => {

@@ -1,14 +1,14 @@
 {
-  "name": "codex-avatars-local",
+  "name": "nova-fox-companion-local",
   "interface": {
-    "displayName": "Codex Avatars Local"
+    "displayName": "Nova Fox Companion Local"
   },
   "plugins": [
     {
-      "name": "codex-avatars",
+      "name": "nova-fox-companion",
       "source": {
         "source": "local",
-        "path": "./plugins/codex-avatars"
+        "path": "./plugins/nova-fox-companion"
       },
       "policy": {
         "installation": "AVAILABLE",
