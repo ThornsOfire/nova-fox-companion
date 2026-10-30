@@ -1,160 +1,107 @@
 # Nova Fox Companion
 
-**Source branch:** [feature/nova-desktop-play](https://github.com/ThornsOfire/nova-fox-companion/tree/feature/nova-desktop-play). This main branch is the documentation homepage. Use the source branch for the Nova implementation and setup instructions.
+Nova is a little desktop spirit fox who follows Codex activity, naps between jobs, and occasionally has something to say. She is a standalone Windows companion built on [Codex Avatars](https://github.com/Kajdrak2/Codex-avatars), with original fox artwork and optional OpsWolf integration.
 
-An evolving fork of [Codex Avatars](https://github.com/Kajdrak2/Codex-avatars) with an original spirit fox, floating spirit chat controls, optional speech, GPT model selection, encrypted memory, fullscreen avoidance, and playful desktop behavior. See [Nova Fox Companion development notes](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/nova-fox-companion.md) for implemented behavior and validation limits. Nova uses its own plugin, hook marker, named pipe, and startup identifiers. Existing upstream integration is not modified.
+[Lire en français](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/README.fr.md)
 
-Try the isolated renderer preview with `npm run preview:nova -- --scene=chat`. It uses synthetic data and makes no model calls or changes to Codex hooks. Other preview scenes: `sleep`, `peek`, `play`, `escape`, `fullscreen`.
+## From a human to a human
 
-## Codex compatibility
+**Looking for the code?** Use [the development source](https://github.com/ThornsOfire/nova-fox-companion/tree/feature/nova-desktop-play). This homepage branch carries the project overview.
 
-Use **Codex connection** in settings to choose an existing Codex home, or follow CODEX_HOME/the standard default. Nova stores its own settings, keys, and memory separately. Hook installation is explicit and targets only that home; conflicts with the original Avatars integration are reported. [Compatibility checks and validation limits](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/nova-fox-companion.md#codex-connection-settings-and-compatibility-validation).
+This is still an early development project. Nova can wander, play with a pretend mouse cursor, float a chat bubble above her head, and react to agent activity. You can keep one resident fox or turn on separate companions for agents. A tiny desktop department is possible; a reliable office manager is still a future ambition.
 
-## Nova Fox Companion
+**There is no published Nova installer yet.** This checkout requires development tools. The `0.7.2` package number comes from the upstream project; it does not mean these Nova features have had a public release. If you want something you can simply download and double-click, we're not there yet.
 
-Nova Fox Companion gives the main task and every Codex subagent an independent animated companion. Characters use the native Codex Pet v2 format and roam directly across one or more displays, with no dock, colored panel, or visible overlay background.
+### Take a look
 
-> **Development fork; no public Nova release or installer is published.** Package version `0.7.2` comes from the inherited Codex Avatars baseline. Nova-specific changes are [Unreleased](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/CHANGELOG.md); local `0.7.2-handoff.*` packages identify reviewed development bundles, not GitHub releases. The newest local handoff is .3, with unresolved visual movement/scaling issues in [known issues](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/known-issues.md). See the [development notes](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/nova-fox-companion.md) for exact verification limits.
-
-[Lire en français](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/README.fr.md)
-
-## Take a look
-
-![Nova, her sun spirit and floating chat controls in a synthetic preview](https://raw.githubusercontent.com/ThornsOfire/nova-fox-companion/272f89b9937ea8fa5cc8e5796714bdb8234affc4/docs/images/nova-chat-preview.png)
+![Nova, her sun spirit and floating chat controls in a synthetic preview](https://raw.githubusercontent.com/ThornsOfire/nova-fox-companion/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/images/nova-chat-preview.png)
 
 *Synthetic renderer preview with sample chat text.*
 
-![Nova napping beside her sun spirit](https://raw.githubusercontent.com/ThornsOfire/nova-fox-companion/272f89b9937ea8fa5cc8e5796714bdb8234affc4/docs/images/nova-sleep-preview.png)
+![Nova napping beside her sun spirit](https://raw.githubusercontent.com/ThornsOfire/nova-fox-companion/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/images/nova-sleep-preview.png)
 
-*Sleep preview. These genuine captures show the current artwork and renderer; they do not certify native movement or gaming performance. [Capture details](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/images/README.md).*
+*Sleep preview. These genuine captures show the current artwork and renderer; they do not certify native movement or gaming performance. [Capture details](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/images/README.md).*
 
-## Features
+### Trying her out
 
-- A genuinely invisible overlay: only avatars and optional labels are drawn.
-- One independent character per `agent_id`, including the main agent.
-- Native Codex Pet v2 movement, working, waiting, and completion animations.
-- Enable or disable avatars discovered under `~/.codex/pets`.
-- Automatically detect avatars created from ChatGPT Work or Codex.
-- Roam through the actual Windows display arrangement, crossing only shared screen edges and intermediary monitors.
-- Draw custom roaming rectangles directly on the desktop, like a screenshot selection.
-- Show each main Codex task title and the real collaboration subtask name, plus optional model and reasoning effort.
-- Size main agents and subagents independently.
-- Preview both avatar sizes live while dragging their controls.
-- Optionally keep recently idle or completed agents visible as stationary sleeping Pets for up to 30 minutes.
-- Delayed lifecycle end events cannot resurrect an expired sleeping avatar.
-- Create a tailored Pet from the settings form in a prefilled Codex task.
-- Browse, search, preview, and directly install deduplicated V2 Pets from the controlled Codex Avatars catalog fork and the original Awesome Codex Pet catalog.
-- Validate and submit a selected local V2 Pet directly to the catalog through GitHub, without spending Codex credits.
-- Report a published Pet from its marketplace card through a prefilled public GitHub issue.
-- Open a guided GitHub bug report or feature suggestion directly from the app, with the installed version filled in automatically.
-- Import and share validated `.codexpet` packages through the local Pet Gallery.
-- Escape passive mode from settings, the Windows tray icon, or `Ctrl+Alt+A`.
-- Hide or restore every avatar from settings or the tray without closing the companion.
-- Start on the first Codex session event, with login startup as a fallback.
-- Local, metadata-minimized event transport.
+You'll need Windows 10/11, Git, Node.js 22 or newer with npm, and a terminal for the source setup. Following real agents also requires a compatible Codex installation; OpsWolf is optional. Someone comfortable with development tools can prepare the source using the commands below. The isolated preview is the simplest first look: it uses sample activity and chat rather than connecting to your agents.
 
-## Why a local renderer is still required
+Once the normal app is running, click her sun spirit to open chat and controls, or use the Windows notification-area icon to open settings. You can drag her out of the way, mute her, or choose **Hide Nova**. The tray icon brings her back. Her first introduction asks what to call you rather than assuming a name.
 
-The plugin owns the ChatGPT/Codex integration: lifecycle hooks, installation, commands, and avatar creation. Plugin UI runs inside an iframe in ChatGPT, so it cannot create an operating-system window above unrelated applications.
+In **Codex connection**, select the existing Codex home you want her to follow. Rendering a fox does not require installing hooks. Following live agent events does require the Nova plugin's reviewed lifecycle hooks or an explicitly installed standalone hook integration. Review Codex's trust prompts; installing from source is not permission to silently enable every integration. See the [connection and compatibility notes](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/nova-fox-companion.md#codex-connection-settings-and-compatibility-validation).
 
-A local Electron process therefore draws the desktop sprites. A packaged installer can bundle that runtime; the current source setup requires the installed development tools described below. No Nova installer is published yet.
+The optional OpsWolf fox button uses a Windows app link. New normal default profiles attempt to register it on first launch when no handler exists; existing profiles have a restore-link control in Nova settings. The OpsWolf button still has an open launch bug, so use the tray or normal app launch rather than relying on it.
 
-## Installer status
+### Voice, memory, and privacy
 
-This fork has no downloadable release yet. Use the source-development instructions below or an explicitly reviewed local handoff; upstream installers do not contain the Nova-specific changes. The inherited packaging workflow can build a self-contained installer, but publication, signing, installer behavior and fresh-machine acceptance require a separate review. See [release preparation](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/releasing.md).
+Nova works without an API key. Local spoken quips use your installed system voice; agent status updates stay visual. Mute stops the voice. Natural cloud speech and cloud-generated remarks are optional, use your own API key, and can incur separate API charges. A Codex login does not pay for those requests. Model selection applies to the optional cloud personality; a dedicated native Codex chat acting as Nova's brain is **not implemented yet**.
 
-The setup/installer paths can register local integration, install hooks and start the companion. Review those actions and Codex's hook trust prompt before using them. Rendering a synthetic preview requires none of that integration.
+Settings stay in Nova's own app data, separate from Codex. Her API key and personal chat memory use OS encryption without a plaintext fallback; ordinary settings are not encrypted. Memory retains up to 100 chat entries/remarks and 1,000 characters of notes, with recent context sent when cloud personality is enabled. You can review and clear it in settings. Cloud window vision is a separate, disabled-by-default choice: it can send a bounded image of an eligible window to the provider. Don't enable it unless you want that behavior. Window and cursor geometry otherwise stays local; cursor play never moves your real pointer.
 
-When a newer GitHub release is available, the companion offers to open its release page on startup. Updates remain user-mediated: download and run the normal installer rather than allowing a silent executable replacement.
+The app also has inherited community-pet browsing and GitHub submission features. It may fetch public catalog metadata; installing pets downloads their assets, and publishing a pet is a separate public action. Those pets have their own license terms. See the [data boundaries](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/nova-fox-companion.md) and [architecture](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/architecture.md) before enabling cloud, vision, hooks, startup, or publication features.
 
-## Install from Git — development
+### What still needs work
 
-Requirements: Windows 10/11, Node.js 22 or newer, and a current ChatGPT desktop app with Codex.
+- Nova can briefly glitch ahead while moving in the compact overlay; the cause is not confirmed.
+- Chasing the cursor can change her size on a mixed-resolution monitor setup.
+- The sun spirit could sit closer to her.
+- The optional OpsWolf button can show a warning without launching her. Direct Windows-link launch has worked in a local trial, which does not establish that the button works.
+
+These are [open issues](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/known-issues.md), not promised fixes. Synthetic screenshots and automated tests do not prove smooth gaming performance, every physical monitor arrangement, or working authenticated cloud voice. Earlier local GPU measurements are encouraging, but visual stability and repeatable game tests are still pending. She's designed to stay out of the way of fullscreen apps, but we still need to try it with more games and monitor setups.
+
+## For agents, from an agent
+
+### Source identity and dependencies
+
+- Implementation branch at this review: `feature/nova-desktop-play`; package `0.7.2`, plugin `0.7.2+codex.20260811191704`. Verify the checkout with `git status --short --branch` and `git rev-parse HEAD`; do not treat this README as a source fingerprint.
+- Nova work is [Unreleased](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/CHANGELOG.md). Local `0.7.2-handoff.*` identities describe development payloads, not public installers, Git tags or acceptance. Source pushes, packaging, publication and activation are separate decisions.
+- Electron is pinned to `43.3.0` in [package.json](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/package.json); [package-lock.json](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/package-lock.json) resolves `ws` and `adm-zip` alongside the full dependency tree. Use `npm ci` for lockfile installs. Do not infer current audit results from historical counts.
+- Original fox assets live in `assets/avatars/nova-spirit-fox`; their frame map is not a native Codex Pet v2 export. Imported community V2 pets use their own manifests, provenance and license terms.
+
+### Commands and side effects
+
+From a fresh source checkout, with dependency downloads approved for the environment:
 
 ```powershell
-git clone --branch feature/nova-desktop-play https://github.com/ThornsOfire/nova-fox-companion.git nova-fox-companion
+git clone https://github.com/ThornsOfire/nova-fox-companion.git nova-fox-companion
 cd nova-fox-companion
-powershell -ExecutionPolicy Bypass -File .\install.ps1
+git switch feature/nova-desktop-play
+npm ci
+npm test
+npm run preview:nova -- --scene=chat
 ```
 
-The setup script installs locked dependencies, registers this checkout as a local Codex marketplace, attempts to install `nova-fox-companion@nova-fox-companion-local`, records the source renderer path, and starts it in the background.
-
-Restart ChatGPT, open **Plugins**, choose **Nova Fox Companion Local**, enable **Nova Fox Companion**, and trust its lifecycle hooks when prompted. Non-managed hooks intentionally require this review.
-
-Preview the setup without changing anything:
+The preview uses synthetic fixture state and its separate preview profile. Other scenes include `sleep`, `peek`, `play`, `escape`, `fullscreen`, `input`, `onboarding`, and `frames`. It does not qualify production native viewport movement.
 
 ```powershell
+npm start -- --disable-gpu
+npm run start:background
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -WhatIf
 ```
 
-## Use
+- `npm start` runs the actual app from the mutable checkout, normally opening settings. `--disable-gpu` is the local compatibility launch option, not a system graphics setting. `start:background` uses the normal profile and runs without the initial settings window. Neither is an immutable deployment.
+- Explicit test profiles use `npm start -- --disable-gpu --profile=work/nova-test`; assign a disposable synthetic `CODEX_HOME` too for integration tests. Profile isolation alone does not block networking. Use the existing guarded fixtures for qualification, never live profiles/keys/chats.
+- [install.ps1](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/install.ps1), when run without `-WhatIf`, can run `npm ci`, set the user-level `NOVA_FOX_COMPANION_DEV_ROOT`, attempt local marketplace/plugin installation via Codex CLI, and start the companion. Switches: `-SkipDependencies`, `-SkipPlugin`, `-NoStart`. Hook trust remains a separate Codex choice. Do not run setup as a harmless test.
+- `npm run hooks:status`, `npm run hooks:install`, and `npm run hooks:uninstall` resolve `CODEX_HOME` or the standard fallback; they do not load the app's saved home override. Installation/removal are explicit mutations. Use one reviewed integration route, preserving unrelated hooks and upstream conflicts.
+- `npm run preview:settings` captures actual app settings; it is not the isolated renderer fixture. Supply disposable profile/home and appropriate guards for tests. `npm run demo` sends synthetic bridge activity.
+- `npm run dist` invokes Electron Builder's local Windows NSIS packaging with `--publish never`; it is not a verified installer or authorization to install. Follow [release preparation](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/releasing.md).
 
-The overlay intentionally has no panel. Open settings from the **Nova Fox Companion** icon in the Windows notification area.
+### Integration and state boundaries
 
-- Passive mode makes every click pass through; `Ctrl+Alt+A` always remains available.
-- **Disable avatars** hides the overlay while the tray process and Codex event state remain ready; use the same button or tray action to restore it instantly.
-- Interactive mode lets you drag individual avatars without blocking the rest of the desktop.
-- Select active Pets, separate main/subagent sizes, names, model/effort details, dormant-agent display, reduced movement, and automatic activation of newly discovered Pets.
-- Choose all displays, selected monitors, or draw a custom area on the desktop; drag an avatar across an adjacent screen edge to place it there.
-- Start and stop the synthetic demo from the same button.
+- Resolve one Codex home: saved explicit selection, then `CODEX_HOME`, then `~/.codex`. Nova app data uses Electron `userData`; `--profile=<path>` overrides it. Preserve existing settings, OS-encrypted key/memory and external profiles on activation/rollback.
+- Distinct identifiers: `nova-fox-companion-v1` local named pipe, Nova plugin/hook marker/startup names, and `nova-fox-companion://show` restore scheme. Legacy host names such as Cursadex remain in technical interfaces; stock Codex must not depend on that host.
+- Lifecycle bridge allows bounded metadata. Local index/rollout enrichment is best-effort for titles, agent paths, model and effort; do not claim rollout layouts or Codex's internal UI are supported contracts. No per-agent tool attribution is invented when hooks lack it.
+- Cloud personality/vision default off; voice provider defaults to local. Only quips are spoken. Cloud speech is separately selected and billed; model identifiers and hard-coded local cost estimates require independent provider verification. Never expose keys to renderers or source.
+- Fresh default-profile restore registration skips existing handlers, malformed/existing profiles, explicit `--profile` launches and capture/offline fixtures. Packaging alone does not register anything. The optional host button is independent of the standalone tray.
+- Main process owns native windows, settings, IPC, hooks and provider access; preload exposes bounded methods; renderer owns actors and logical coordinates. The compact viewport and shared 30 FPS active / 12 FPS idle work clock are implemented, with NOVA-003 unresolved.
 
-## Community V2 marketplace
+### Validation and workflow gates
 
-The settings window merges the controlled [Codex Avatars catalog fork](https://github.com/Kajdrak2/awesome-codex-pet) with the original [Awesome Codex Pet](https://github.com/legeling/awesome-codex-pet) catalog. The fork has priority: an identical id or exact spritesheet appears once, while assets with different hashes remain available as real variants. New original-only Pets therefore remain visible without duplicating mirrored entries. Nova Fox Companion displays only native V2 entries (`1536x2288`, 8 columns × 11 rows), with search and category filters. Each source has its own validated cache, so an unavailable source never prevents the other catalog, local Pets, or the overlay from working.
+- Local `.3` qualification recorded 196 Node tests plus offline startup, synthetic geometry/input and scaled tray fixtures. These are historical results, not tests rerun by this README edit. Physical mixed-monitor/hotplug, matched gaming impact, authenticated voice/model/vision and full stock-Codex/optional-host coexistence acceptance remain limited or pending.
+- Current open issues: NOVA-001 scaling, NOVA-002 spirit spacing, NOVA-003 movement glitch, NOVA-004 optional host launch. No source correction is claimed here. See [development notes](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/nova-fox-companion.md), [known issues](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/known-issues.md), [architecture](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/architecture.md), [CONTRIBUTING](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/CONTRIBUTING.md), and [SECURITY](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/SECURITY.md).
+- Follow [AGENTS.md](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/AGENTS.md) and [release preparation](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/docs/releasing.md). Preserve unrelated work; stage only explicit task files. Handoffs need exact source identity, immutable hashes, runtime/dependency evidence and profile-preserving rollback. Keep live data and local bundles out of source. Never rewrite a sealed build or stop the owner's running app to validate docs.
+- No automatic downloads/upgrades, hook installation, URI changes, cloud enablement, activation, restart, commit/push/tag or publication as a documentation side effect. Separate optional host components from standalone application handoffs.
 
-Choosing **Install** downloads only that Pet's `pet.json` and `spritesheet.webp` from its allowlisted source repository. The application verifies declared byte counts and SHA-256 values, confirms the V2 manifest and atlas dimensions, stages both files together, and refuses to overwrite a different local Pet with the same id. It never executes either catalog's shell installation scripts.
+### Credits and license
 
-To contribute, choose a finished local V2 Pet under **Submit one of your Pets**, then select **Submit with GitHub**. A GitHub account is required because the catalog accepts contributions as public pull requests; Codex is not opened and no Codex credits are used. The in-app form displays the final atlas, validates the V2 dimensions and upstream 5 MB pull-request limit, checks catalog ids, canonical keys, names, and exact spritesheet hashes, and collects the author, category, source type, non-commercial terms, and explicit visual-review confirmations. Original and independently generated Pets receive source notes automatically; a reuse/attribution field appears only when the selected source type needs details.
-
-The first connection uses the official GitHub CLI browser flow. Nova Fox Companion first reuses a working GitHub CLI session when one is already available. Otherwise it downloads a pinned Windows build from the official `cli/cli` release, verifies both the archive and executable SHA-256 values, waits for the one-time code, copies it, and opens GitHub so the user can sign in or create an account. **Open GitHub** remains available while authorization is pending, and cancelling never traps the submission dialog. GitHub CLI owns credential storage; Nova Fox Companion strips ambient token environment variables and never reads a token. The connected GitHub login becomes the default author and is remembered locally. The canonical key appears immediately from category and Pet id, includes the author for original characters, and remains editable. After a separate native confirmation, the app writes a submission branch directly when the connected account controls `Kajdrak2/awesome-codex-pet`; other contributors use an existing or newly created fork in the same repository network. It commits exactly `submission.json`, `pet.json`, and `spritesheet.webp` using the catalog's Prettier-compatible JSON layout. If the same Pet already has an open submission, Nova Fox Companion updates the newest matching pull request instead of creating another one; otherwise it opens one ready-for-review pull request against the controlled catalog. A focused submission publishes automatically only after the protected catalog workflow succeeds for its exact commit. Concerns about an already published Pet can be reported from its card; the app prepares a public GitHub issue and the user remains in control of the final submission. Both catalogs and individual Pet assets retain their own authorship and license terms; review them before redistribution.
-
-## Create an avatar from Work or Codex
-
-Open the character studio in settings, describe the appearance, style, personality, colors, props, and exclusions, then choose **Create in Codex**. The app opens `codex://threads/new` with the full prompt prepared. Because that prefill protocol is currently a desktop implementation detail rather than a published compatibility contract, the app copies the same prompt only if launching Codex fails.
-
-The generated task begins with `/goal` to retain a durable completion objective, then explicitly invokes `$hatch-pet`, resolves Codex's bundled workspace Python before running any script, verifies Pillow, validates a `1536x2288` v2 atlas, and installs `pet.json` beside `spritesheet.webp` under `~/.codex/pets/<pet-id>`. The renderer refreshes that shared library every five seconds.
-
-## Privacy
-
-Nova Fox Companion adds opt-in OpenAI personality requests, encrypted direct-chat memory, and separately opt-in window vision with app exclusions. Window/cursor geometry stays local. Window images are sent only when the vision feature is enabled and are not saved locally. See the [current development notes](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/nova-fox-companion.md) for the exact data boundaries and validation status. The upstream bridge behavior below remains in place.
-
-The hook allowlists only lifecycle name, session/turn/agent ids, agent type, optional agent name/model/effort, and the final project-folder name. The full working-directory path never crosses the bridge. Prompts, tool arguments, command output, transcripts, messages, source contents, and secrets are excluded.
-
-Codex hooks do not currently expose task titles, collaboration task names, models, or effort. To label an avatar accurately, the companion reads the root title from Codex's local `session_index.jsonl` and monitors that index for renames, then correlates each hook `agent_id` with the matching local rollout and extracts only `agent_path`, `model`, and `effort`; it does not copy conversation content into its state or settings.
-
-Events use the local `nova-fox-companion-v1` named pipe. There is no TCP listener or remote service.
-
-Marketplace browsing, Pet installation, update checks, direct GitHub submission, and opening a public Pet report are the optional outbound network features. The main process fetches the two public catalog manifests, thumbnails from `codexpet.top`, and selected Pet files only from fixed `Kajdrak2/awesome-codex-pet` or `legeling/awesome-codex-pet` paths. Direct submission uses a fixed official GitHub CLI download plus fixed GitHub API endpoints targeting the controlled fork after browser authorization and an explicit publication confirmation. Pet reports open a fixed GitHub issue URL containing only the selected reason, bounded user-written explanation, running app version, and verified public catalog metadata; the user submits it on GitHub. The sandboxed renderer keeps `connect-src 'none'` and receives only bounded metadata, local cached-image URLs, connection status, and progress events.
-
-## Development
-
-```powershell
-npm ci
-npm test
-npm start
-npm run start:background
-npm run preview
-npm run preview:settings
-npm run demo
-npm run dist
-```
-
-`npm run dist` builds a local self-contained installer; it does not publish it. The inherited release workflow can also package a source/plugin archive after an explicitly authorized release tag. See [release preparation](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/releasing.md); a source push is not release approval.
-
-## Current limitations
-
-- Local .3 performance gains do not establish visual stability: whole-body movement jumps and chase scaling remain open. Read [known issues](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/known-issues.md) before choosing a local test build; .2 remains the prior rollback.
-- A linked native Codex chat brain, expanded personalization and real authenticated voice acceptance remain separate work. Optional cloud requests require the app's own API key; a Codex login is not that credential.
-
-- `SubagentStart` and `SubagentStop` expose an individual `agent_id`; tool-use hooks do not. Nova Fox Companion does not invent per-agent tool attribution.
-- The integrated marketplace is a third-party community catalog, not an official OpenAI service. Browsing can use a recent cache while offline, but a new Pet installation requires network access.
-- Publishing a Pet requires a GitHub account, a live catalog duplicate check, browser authorization, and a final native confirmation; it never requires Codex credits.
-- Many community Pet assets use non-commercial terms or depict third-party characters. Users remain responsible for reviewing the displayed upstream license and source information.
-- A plugin alone cannot draw above the entire Windows desktop; the local renderer is a real platform boundary.
-- A broadly distributed installer should be code-signed to avoid SmartScreen warnings.
-
-See [docs/architecture.md](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/docs/architecture.md), [CONTRIBUTING.md](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/CONTRIBUTING.md), and [SECURITY.md](https://github.com/ThornsOfire/nova-fox-companion/blob/feature/nova-desktop-play/SECURITY.md).
-
-## License
-
-MIT
+[MIT](https://github.com/ThornsOfire/nova-fox-companion/blob/ad1523b20f483d88055e7d6f263fdefeaf24bab9/LICENSE), retaining Codex Avatars contributors' copyright and upstream attribution. Nova's character is original; Mochi's described behavior was inspiration, with no Mochi source or artwork copied. Community catalogs ([Codex Avatars catalog](https://github.com/Kajdrak2/awesome-codex-pet), [Awesome Codex Pet](https://github.com/legeling/awesome-codex-pet)) and downloaded assets retain their own authorship and terms.
