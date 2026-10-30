@@ -32,6 +32,18 @@ test('defaults to English and accepts only the supported French alternative', ()
   assert.equal(normalizeSettings({ language: 'fr' }).language, 'fr');
 });
 
+test('only a missing profile is fresh; existing or malformed settings do not trigger first-install actions', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'nova-fresh-'));
+  try {
+    const file = path.join(directory, 'settings.json'), store = new SettingsStore(file);
+    await store.load(); assert.equal(store.isNewProfile, true);
+    await store.update({ companionVoiceMuted: true });
+    await store.load(); assert.equal(store.isNewProfile, false);
+    await fs.writeFile(file, '{broken');
+    await store.load(); assert.equal(store.isNewProfile, false);
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
+
 test('persists companion quiet and mute preferences independently', async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'null-voice-'));
   try {

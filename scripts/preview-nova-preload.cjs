@@ -4,6 +4,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 const subscribe = (channel, callback) => ipcRenderer.on(channel, (_event, value) => callback(value));
 contextBridge.exposeInMainWorld('novaFoxCompanion', {
   getBootstrap: () => ipcRenderer.invoke('fixture:bootstrap'),
+  setOverlaySurface: (value) => ipcRenderer.invoke('fixture:surface', value),
   companionHistory: () => ipcRenderer.invoke('fixture:history'),
   setCompanionName: (name) => ipcRenderer.invoke('fixture:name', name),
   setOverlayHitTest: async () => {}, setControlHitTest: async () => {}, setChatFocus: async () => {},

@@ -10,6 +10,7 @@ function subscribe(channel, callback) {
 
 contextBridge.exposeInMainWorld('novaFoxCompanion', {
   getBootstrap: () => ipcRenderer.invoke('nova:get-overlay-bootstrap'),
+  setOverlaySurface: (value) => ipcRenderer.invoke('nova:overlay-surface', value),
   onDesktop: (callback) => subscribe('nova:desktop', callback),
   onConversation: (callback) => subscribe('nova:companion-conversation', callback),
   onMemoryCleared: (callback) => subscribe('nova:companion-memory-cleared', callback),

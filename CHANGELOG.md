@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Nova-specific changes below are local source and handoff work, not a public Nova release. The `.3` handoff has been launched on the owner's existing profile; desktop visual acceptance is incomplete. Earlier numbered entries are inherited Codex Avatars history, not evidence of Nova publication.
+
+### Fixed
+
+- Windows overlays use a padded native viewport around visible pets/controls while retaining the full logical roaming desktop; dragging expands the viewport. Rendering work and decorative CSS animations share a 30 FPS active / 12 FPS idle clock, unchanged sprite frames are cached, and hidden windows can throttle. Mixed-DPI and software-rendering compatibility flags remain unchanged.
+- Fresh normal Nova profiles enable the restore app link by default, preserving existing profiles/handlers and skipping previews or explicit test profiles.
+- Windows tray controls use a display-scaled menu with keyboard navigation, rather than inheriting the overlay's forced 100% native menu scale.
+- Roaming uses running frames during status reactions and vertical travel, preventing seated and paw-grooming poses from sliding across the desktop.
+
+### Known issues
+
+- The owner reported a brief forward glitch during travel in the `.3` compact overlay. Cause and correction remain unverified; see [NOVA-003](docs/known-issues.md#nova-003--brief-forward-jump-while-travelling-with-the-compact-overlay). Chase scaling and sun-spirit spacing also remain open.
+
 ## [0.7.2] - 2026-08-11
 
 ### Fixed

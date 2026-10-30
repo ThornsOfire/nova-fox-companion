@@ -27,7 +27,7 @@ Normalizer + agent store
       +-------------> normal settings window + Windows tray
       |
       v
-fully transparent virtual-desktop BrowserWindow
+transparent compact BrowserWindow over a logical roaming desktop
       |
       v
 independent Codex Pet v2 sprite actors
@@ -51,7 +51,9 @@ The first normal packaged launch shows a four-step guide. Its plugin action open
 
 ## Overlay and control surface
 
-The overlay BrowserWindow covers the resolved union of selected work areas, has an alpha-zero background, and renders only actor nodes. It is separate from the normal settings window. On Windows, a virtual-desktop-sized transparent window is first created inside one work area and expanded to its final union only after the renderer is ready; this avoids the native creation-time clamp to a single monitor. The same bootstrap is used by the custom-zone picker.
+The logical desktop covers the resolved union of selected work areas; its coordinate system can include negative monitor origins. In the .3 implementation, the alpha-zero native BrowserWindow follows a padded union of visible pets and controls while the renderer translates the logical world to compensate. Chat can expand that union, distant actors can still require a large surface, and dragging temporarily expands to the full logical desktop. Hidden windows throttle and CSS/JS rendering share an active/idle clock. The settings window is separate; the full-desktop zone picker retains its own bootstrap.
+
+This is an asynchronous native-window/renderer transaction, not a guarantee of atomic presentation. The owner has reported movement jumps in .3; a gap between native bounds changes and renderer compensation is a hypothesis under investigation. See [known issues](known-issues.md). Geometry/input fixtures and desktop performance measurements do not replace frame-by-frame visual acceptance.
 
 In passive mode the entire window ignores mouse input. The settings window, tray menu, and global `Ctrl+Alt+A` shortcut are outside that input surface, so passive mode cannot lock the user out. In interactive mode forwarded pointer movement enables input only while the pointer is over an avatar; transparent desktop regions continue to pass clicks through.
 

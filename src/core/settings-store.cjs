@@ -158,15 +158,18 @@ class SettingsStore {
     this.filePath = filePath;
     this.value = normalizeSettings(DEFAULT_SETTINGS);
     this.loadError = null;
+    this.isNewProfile = false;
     this.updateQueue = Promise.resolve();
   }
 
   async load() {
+    this.isNewProfile = false;
     try {
       const source = await fs.readFile(this.filePath, 'utf8');
       this.value = normalizeSettings(JSON.parse(source));
       this.loadError = null;
     } catch (error) {
+      this.isNewProfile = error.code === 'ENOENT';
       if (error.code !== 'ENOENT') this.loadError = error.message;
       this.value = normalizeSettings(DEFAULT_SETTINGS);
     }

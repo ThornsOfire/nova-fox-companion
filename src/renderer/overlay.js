@@ -6,6 +6,36 @@ const topology = window.NovaFoxCompanionTopology;
 const labelLayout = window.NovaFoxCompanionLabelLayout.labelLayout;
 const assignAvatars = window.NovaFoxCompanionAssignment.assignAvatars;
 const actors = new Map();
+const renderClock = new window.NovaOverlayPerformance.FrameClock();
+const animationClock = new window.NovaOverlayPerformance.AnimationClock();
+let surface = null, surfacePending = false, surfaceFailed = false, surfaceCheckedAt = 0, surfaceGeneration = 0;
+function applySurface(value) {
+  surface = value;
+  world.style.width = `${value.world.width}px`; world.style.height = `${value.world.height}px`;
+  world.style.left = `${-value.x}px`; world.style.top = `${-value.y}px`;
+  world.style.right = 'auto'; world.style.bottom = 'auto';
+}
+function updateSurface() {
+  if (!api.setOverlaySurface || !surface || surfacePending || surfaceFailed) return;
+  if (!draggedActor && performance.now()-surfaceCheckedAt<100) return;
+  surfaceCheckedAt=performance.now();
+  const elements = [...world.querySelectorAll('.avatar, .companion-spirit, .companion-bubble:not([hidden]), .companion-chat:not([hidden]), .cursor-decoy:not([hidden])')];
+  const rects = elements.map(el=>el.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0)
+    .map(r=>({ x:r.x+surface.x,y:r.y+surface.y,width:r.width,height:r.height }));
+  const desired=window.NovaOverlayPerformance.fitSurface(rects,surface.world,surface,Boolean(draggedActor));
+  if (['x','y','width','height'].every(key=>desired[key]===surface[key])) return;
+  surfacePending = true;
+  const generation=surfaceGeneration, full=Boolean(draggedActor);
+  void api.setOverlaySurface({ rects, full, world:surface.world }).then(value=>{
+    if (generation===surfaceGeneration&&!value.stale) applySurface(value);
+  }).catch(()=>{
+    surfaceFailed=true;void api.setOverlaySurface({rects:[],full:true,world:surface.world}).then(applySurface).catch(()=>{});
+  })
+    .finally(()=>{
+      surfacePending=false;
+      if(generation!==surfaceGeneration||full!==Boolean(draggedActor)){surfaceCheckedAt=0;updateSurface();}
+    });
+}
 const reactions = new window.NovaCompanion.CompanionReactions();
 const voice = new window.NovaCompanionVoice.CompanionVoice({
   synthesis: window.speechSynthesis,
@@ -122,14 +152,15 @@ function nextRandom(actor) {
 }
 
 function viewportZones() {
+  const width = surface?.world.width || window.innerWidth, height = surface?.world.height || window.innerHeight;
   const source = desktop ? desktop.safeZones : zone?.zones?.length
     ? zone.zones
     : [{ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight }];
   const visible = source.map((rectangle) => {
     const x = Math.max(0, rectangle.x);
     const y = Math.max(0, rectangle.y);
-    const right = Math.min(window.innerWidth, rectangle.x + rectangle.width);
-    const bottom = Math.min(window.innerHeight, rectangle.y + rectangle.height);
+    const right = Math.min(width, rectangle.x + rectangle.width);
+    const bottom = Math.min(height, rectangle.y + rectangle.height);
     return { x, y, width: right - x, height: bottom - y, monitorBounds: rectangle.monitorBounds, monitorScale: rectangle.monitorScale || 1 };
   }).filter((rectangle) => rectangle.width >= 72 && rectangle.height >= 72);
   return visible.length > 0
@@ -522,6 +553,8 @@ function frameIndex(animation, time) {
 
 function animationFor(actor, moving) {
   if (actor.avatar.frameAtlas && actor.dragging) return animations.carried;
+  // Travel must use locomotion frames, including vertical paths and status reactions.
+  if (moving) return actor.velocityX < 0 ? animations.left : animations.right;
   if (actor.agent.status === 'attention') return animations.waiting;
   const reaction = reactions.get(actor.agent.sessionId, actor.agent.id);
   if (reaction?.mood === 'proud' || reaction?.mood === 'amused') return animations.wave;
@@ -531,8 +564,6 @@ function animationFor(actor, moving) {
   if (actor.avatar.frameAtlas && ['idle', 'dormant'].includes(actor.agent.status) && !moving
     && actor.playState.mode !== 'peek' && chatActor !== actor && Date.now() > actor.awakeUntil) return animations.sleep;
   if (['idle', 'dormant'].includes(actor.agent.status) && !moving) return animations.idle;
-  if (moving && actor.velocityX > 4) return animations.right;
-  if (moving && actor.velocityX < -4) return animations.left;
   return animations.working;
 }
 
@@ -546,6 +577,8 @@ function applySpriteFrame(actor, time, moving) {
     const frame = frames[reduced ? 0 : frameIndex({ durations: frames.map((item) => item.duration) }, time)];
     const size = avatarSizeFor(actor.agent), height = size * 1.08334;
     const scale = Math.min(size / atlas.referenceWidth, height / atlas.referenceHeight);
+    if (actor.lastFrame?.frame === frame && actor.lastFrame.scale === scale && actor.lastFrame.name === name) return;
+    actor.lastFrame = { frame, scale, name };
     const art = actor.spriteArt;
     art.style.width = `${frame.width * scale}px`; art.style.height = `${frame.height * scale}px`;
     art.style.left = `${(size - frame.width * scale) / 2}px`;
@@ -636,11 +669,17 @@ function constrainActor(actor) {
 }
 
 function animate(time) {
+  requestAnimationFrame(animate);
+  if (document.hidden) return;
+  const active = Boolean(draggedActor || chatActor) || [...actors.values()].some(actor=>
+    !['idle','dormant'].includes(actor.agent.status) || actor.playState.mode!=='roam');
+  if (!renderClock.due(time, active)) return;
+  animationClock.advance(document.getAnimations(), time, animation=>animation instanceof CSSAnimation);
   const safe = !desktop || desktop.safeZones.length > 0;
   world.hidden = !safe;
-  if (!safe) { decoy.hidden = true; closeChat(); requestAnimationFrame(animate); return; }
+  if (!safe) { decoy.hidden = true; closeChat(); return; }
   for (const actor of actors.values()) updateSpeech(actor);
-  const deltaSeconds = Math.min(0.05, Math.max(0, (time - previousFrame) / 1000));
+  const deltaSeconds = Math.min(0.1, Math.max(0, (time - previousFrame) / 1000));
   previousFrame = time;
   for (const actor of actors.values()) {
     updatePlay(actor);
@@ -655,10 +694,11 @@ function animate(time) {
     actor.element.style.transform = `translate3d(${actor.x.toFixed(2)}px, ${actor.y.toFixed(2)}px, 0)`;
     positionChat(actor);
   }
-  requestAnimationFrame(animate);
+  updateSurface();
 }
 
 function positionChat(actor) {
+  if (actor.chat.hidden) return;
   const selected = viewportZones()[actor.zoneIndex] || viewportZones()[0];
   const scale = actorScale(actor.agent);
   const width = Math.min(340 * scale, selected.width - 16);
@@ -738,8 +778,8 @@ document.addEventListener('mousemove', (event) => updateHitTests(event.clientX, 
 
 document.addEventListener('pointermove', (event) => {
   if (!draggedActor) return;
-  draggedActor.x = event.clientX - dragOffset.x;
-  draggedActor.y = event.clientY - dragOffset.y;
+  draggedActor.x = (surface ? event.screenX - surface.world.x : event.clientX) - dragOffset.x;
+  draggedActor.y = (surface ? event.screenY - surface.world.y : event.clientY) - dragOffset.y;
   const zones = viewportZones();
   const centerX = draggedActor.x + avatarSizeFor(draggedActor.agent) / 2;
   const centerY = draggedActor.y + actorHeight(draggedActor) / 2;
@@ -762,9 +802,11 @@ world.addEventListener('pointerdown', (event) => {
   actor.playState.pickup(Date.now());
   actor.route = [];
   actor.transition = null;
-  dragOffset = { x: event.clientX - actor.x, y: event.clientY - actor.y };
+  dragOffset = { x: (surface ? event.screenX - surface.world.x : event.clientX) - actor.x,
+    y: (surface ? event.screenY - surface.world.y : event.clientY) - actor.y };
   element.setPointerCapture(event.pointerId);
   updateActorElement(actor);
+  updateSurface();
 });
 
 function finishDrag(event) {
@@ -794,6 +836,7 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && chatActor) { event.preventDefault(); closeChat(); }
 });
 window.addEventListener('resize', () => {
+  if (surface) return;
   let index = 0;
   for (const actor of actors.values()) {
     actor.zoneIndex = index % Math.max(1, viewportZones().length);
@@ -819,6 +862,10 @@ api.onSettings((value) => {
   voice.setMuted(settings.companionVoiceMuted || !settings.companionRemarks || !settings.overlayEnabled);
   reactions.observe(snapshot, { enabled: settings?.companionRemarks, language: settings?.language, cloud: settings?.companionCloudEnabled });
   zone = value.zone;
+  if(surface&&zoneChanged&&zone?.windowBounds){
+    surfaceGeneration++;surfaceCheckedAt=0;surfaceFailed=false;
+    applySurface({x:0,y:0,width:zone.windowBounds.width,height:zone.windowBounds.height,world:zone.windowBounds});
+  }
   zoneSignature = nextZoneSignature;
   updateInteractiveClass();
   if (zoneChanged) {
@@ -867,7 +914,7 @@ api.onDesktop((value) => {
       }
     }
   }
-  updateHitTests(value.cursor.x, value.cursor.y);
+  updateHitTests(value.cursor.x-(surface?.x||0), value.cursor.y-(surface?.y||0));
 });
 
 api.onConversation(({ text, result, origin }) => {
@@ -897,6 +944,7 @@ async function initialize() {
   voice.setMuted(settings.companionVoiceMuted || !settings.companionRemarks || !settings.overlayEnabled);
   avatars = bootstrap.avatars;
   zone = bootstrap.zone;
+  if (bootstrap.surface) applySurface(bootstrap.surface);
   zoneSignature = JSON.stringify(zone || null);
   updateInteractiveClass();
   reconcileActors();

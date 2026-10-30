@@ -1,0 +1,10 @@
+:root { color-scheme: light dark; font: 14px "Segoe UI", sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: light-dark(#fafafa, #202124); color: light-dark(#202124, #f3f3f3); }
+#menu { padding: 8px; height: 100vh; overflow-y: auto; border: 1px solid light-dark(#ccc, #555); }
+button { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 38px; padding: 7px 9px;
+  border: 0; border-radius: 4px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: default; }
+button:hover, button:focus-visible { background: light-dark(#e7e7e7, #3b3c3f); outline: 2px solid light-dark(#555, #ddd); outline-offset: -2px; }
+button:disabled { opacity: .45; }
+.check { flex: 0 0 16px; }
+.separator { height: 1px; background: light-dark(#ddd, #555); margin: 6px 4px; }

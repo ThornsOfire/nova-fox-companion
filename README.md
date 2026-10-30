@@ -12,9 +12,19 @@ Use **Codex connection** in settings to choose an existing Codex home, or follow
 
 Nova Fox Companion gives the main task and every Codex subagent an independent animated companion. Characters use the native Codex Pet v2 format and roam directly across one or more displays, with no dock, colored panel, or visible overlay background.
 
-> Project status: version `0.7.2` is published on GitHub. It fixes the **Start with Windows** false failure seen with Electron 43, verifies the actual Windows startup state, and replaces duplicate legacy entries with one canonical registration. It also includes the external V2 Pet marketplace, automatic publication after protected CI, public in-app Pet reports, direct GitHub submission, continuous multi-task activity reconciliation, reliable previews for fork-only Pets, and guided feedback described below. The installer is not code-signed yet.
+> **Development fork; no public Nova release or installer is published.** Package version `0.7.2` comes from the inherited Codex Avatars baseline. Nova-specific changes are [Unreleased](CHANGELOG.md); local `0.7.2-handoff.*` packages identify reviewed development bundles, not GitHub releases. The newest local handoff is .3, with unresolved visual movement/scaling issues in [known issues](docs/known-issues.md). See the [development notes](docs/nova-fox-companion.md) for exact verification limits.
 
 [Lire en français](README.fr.md)
+
+## Take a look
+
+![Nova, her sun spirit and floating chat controls in a synthetic preview](docs/images/nova-chat-preview.png)
+
+*Synthetic renderer preview with sample chat text.*
+
+![Nova napping beside her sun spirit](docs/images/nova-sleep-preview.png)
+
+*Sleep preview. These genuine captures show the current artwork and renderer; they do not certify native movement or gaming performance. [Capture details](docs/images/README.md).*
 
 ## Features
 
@@ -45,17 +55,13 @@ Nova Fox Companion gives the main task and every Codex subagent an independent a
 
 The plugin owns the ChatGPT/Codex integration: lifecycle hooks, installation, commands, and avatar creation. Plugin UI runs inside an iframe in ChatGPT, so it cannot create an operating-system window above unrelated applications.
 
-A small local Electron process therefore draws the desktop sprites. The installer bundles it as a self-contained companion; end users need neither Node.js, Git, nor a terminal after downloading it.
+A local Electron process therefore draws the desktop sprites. A packaged installer can bundle that runtime; the current source setup requires the installed development tools described below. No Nova installer is published yet.
 
-## Simple installation — recommended
+## Installer status
 
-1. Open the [latest Nova Fox Companion release](https://github.com/ThornsOfire/nova-fox-companion/releases/latest), download the Windows `.exe` under **Assets**, and run it.
-2. Run the installer and finish the wizard.
-3. On the Codex plugin page that opens, install **Nova Fox Companion** and review its hooks.
+This fork has no downloadable release yet. Use the source-development instructions below or an explicitly reviewed local handoff; upstream installers do not contain the Nova-specific changes. The inherited packaging workflow can build a self-contained installer, but publication, signing, installer behavior and fresh-machine acceptance require a separate review. See [release preparation](docs/releasing.md).
 
-The installer places the companion in the Windows user profile, enables the local hooks immediately, bundles the marketplace and plugin, records the exact renderer path, and opens settings. The final Codex confirmation is intentional: an installer must not accept security-sensitive hooks on the user's behalf.
-
-The published Windows installer is not code-signed yet, so Microsoft SmartScreen may show a warning.
+The setup/installer paths can register local integration, install hooks and start the companion. Review those actions and Codex's hook trust prompt before using them. Rendering a synthetic preview requires none of that integration.
 
 When a newer GitHub release is available, the companion offers to open its release page on startup. Updates remain user-mediated: download and run the normal installer rather than allowing a silent executable replacement.
 
@@ -131,9 +137,12 @@ npm run demo
 npm run dist
 ```
 
-`npm run dist` creates the recommended self-contained installer. GitHub releases also package a source/plugin archive for Git-based development.
+`npm run dist` builds a local self-contained installer; it does not publish it. The inherited release workflow can also package a source/plugin archive after an explicitly authorized release tag. See [release preparation](docs/releasing.md); a source push is not release approval.
 
 ## Current limitations
+
+- Local .3 performance gains do not establish visual stability: whole-body movement jumps and chase scaling remain open. Read [known issues](docs/known-issues.md) before choosing a local test build; .2 remains the prior rollback.
+- A linked native Codex chat brain, expanded personalization and real authenticated voice acceptance remain separate work. Optional cloud requests require the app's own API key; a Codex login is not that credential.
 
 - `SubagentStart` and `SubagentStop` expose an individual `agent_id`; tool-use hooks do not. Nova Fox Companion does not invent per-agent tool attribution.
 - The integrated marketplace is a third-party community catalog, not an official OpenAI service. Browsing can use a recent cache while offline, but a new Pet installation requires network access.

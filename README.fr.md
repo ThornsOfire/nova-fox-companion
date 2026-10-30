@@ -2,7 +2,13 @@
 
 Nova Fox Companion donne un compagnon animé indépendant à la tâche principale et à chaque sous-agent Codex. Les personnages utilisent le format natif des Pets Codex v2 et se déplacent directement sur un ou plusieurs écrans, sans dock, panneau coloré ni fond visible.
 
-> État du projet : la version `0.7.2` est publiée sur GitHub. Elle corrige le faux échec de **Démarrer avec Windows** observé avec Electron 43, vérifie l’état réel du démarrage Windows et remplace les anciennes entrées en double par une seule inscription canonique. Elle inclut aussi le marketplace externe de Pets V2, la publication automatique après une CI protégée, le signalement public des Pets depuis l’application, la soumission directe via GitHub, la réconciliation continue des tâches multiples, des aperçus fiables pour les Pets propres au fork et le retour guidé décrits plus bas. L’installeur n’est pas encore signé.
+> **Fork de développement : aucune release ni aucun installeur Nova n’est publié.** La version `0.7.2` est héritée de Codex Avatars ; les changements Nova restent [non publiés](CHANGELOG.md). Les paquets locaux `0.7.2-handoff.*` ne sont pas des releases GitHub. Le paquet .3 conserve des problèmes visuels ouverts : voir les [problèmes connus](docs/known-issues.md) et le [guide anglais](README.md) pour l’état actuel. Les sections héritées ci-dessous ne garantissent pas la validation de chaque fonction dans Nova.
+
+## Aperçu
+
+![Nova, son esprit solaire et les commandes de discussion](docs/images/nova-chat-preview.png)
+
+*Capture réelle du rendu avec une conversation fictive. Voir les [détails des captures](docs/images/README.md) ; cet aperçu ne valide pas les déplacements natifs ni les performances en jeu.*
 
 ## Ce qui est déjà pris en charge
 
@@ -35,15 +41,11 @@ Le plugin assure l’intégration à ChatGPT/Codex : hooks, installation, comman
 
 Le dessin sur le bureau est donc assuré par un petit processus Electron local. L’installeur l’embarque de façon autonome ; l’utilisateur final n’a besoin ni de Node.js, ni de Git, ni d’un terminal après téléchargement.
 
-## Installation simple — recommandée
+## État de l’installeur
 
-1. Ouvre la [dernière release de Nova Fox Companion](https://github.com/ThornsOfire/nova-fox-companion/releases/latest), télécharge le fichier Windows `.exe` sous **Assets**, puis lance-le.
-2. Ouvre l’installeur et termine l’assistant.
-3. Dans la page Codex qui s’ouvre, installe **Nova Fox Companion** et vérifie ses hooks.
+Aucun installeur de ce fork n’est encore disponible au téléchargement. Utilise les instructions de développement ci-dessous ou un paquet local explicitement vérifié. Les installeurs amont n’incluent pas les changements Nova. La publication et la signature demandent une revue distincte : voir [la préparation des releases](docs/releasing.md).
 
-L’installeur place le compagnon dans le profil Windows, active immédiatement les hooks locaux, embarque le marketplace et le plugin, enregistre le chemin exact du renderer et ouvre les réglages. La confirmation finale dans Codex reste volontaire : un installeur ne doit pas accepter des hooks de sécurité à la place de l’utilisateur.
-
-L’installeur Windows publié n’est pas encore signé ; Microsoft SmartScreen peut donc afficher un avertissement.
+Les scripts d’installation peuvent enregistrer l’intégration locale, installer des hooks et lancer le compagnon. Vérifie ces actions et les demandes de confiance de Codex avant de les utiliser. Un aperçu synthétique ne nécessite pas cette intégration.
 
 Lorsqu’une release GitHub plus récente est disponible, le compagnon propose d’ouvrir sa page au démarrage. La mise à jour reste volontaire : il faut télécharger et lancer l’installeur normal, sans remplacement silencieux de l’exécutable.
 

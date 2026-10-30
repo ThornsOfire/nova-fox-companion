@@ -1,5 +1,7 @@
 # Nova Fox Companion reboot checkpoint — 2026-10-29
 
+**Historical checkpoint, not current launch instructions.** This records the earlier 184-test source baseline. Later .2/.3 handoffs and owner movement/scaling reports supersede its readiness/default statements. Read [current development notes](nova-fox-companion.md) and [known issues](known-issues.md). Use the exact reviewed handoff and its external-profile guard when selecting a packaged build; the source `npm start` command below does not select that immutable package. Do not infer current profile/key/voice state from this dated record.
+
 Repository folder: Nova Fox Companion. Branch: feature/nova-desktop-play. The final commit identifier is reported in chat and available with `git log -1 --oneline`.
 
 ## Saved behavior

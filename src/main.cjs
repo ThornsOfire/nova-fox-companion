@@ -20,6 +20,9 @@ const {
   safeStorage,
 } = require('electron');
 const { AgentStore } = require('./core/agent-store.cjs');
+const { ScaledTrayMenu } = require('./core/tray-menu.cjs');
+const { fitSurface } = require('./renderer/overlay-performance.js');
+let scaledTrayMenu = null;
 const { DesktopSensor } = require('./core/desktop-sensor.cjs');
 const { allowedWindow, captureWindow } = require('./core/window-vision.cjs');
 let lastForegroundWindowId = null;
@@ -36,7 +39,7 @@ let settingsWindowScale = 1;
 let lastCursorPoint = null;
 let cursorIdleSince = Date.now();
 const knownChatSessions = new Set();
-const { SCHEME: RESTORE_SCHEME, isRestoreLink } = require('./core/restore-link.cjs');
+const { SCHEME: RESTORE_SCHEME, isRestoreLink, registerFreshRestoreLink } = require('./core/restore-link.cjs');
 const { CompanionSpeech } = require('./core/companion-speech.cjs');
 let companionSpeech = null;
 const { CompanionBrain, CompanionKeyStore, CompanionMemory } = require('./core/companion-brain.cjs');
@@ -522,7 +525,7 @@ function desktopPayload() {
   const moved = !lastCursorPoint || cursor.x !== lastCursorPoint.x || cursor.y !== lastCursorPoint.y;
   if (moved) cursorIdleSince = now;
   lastCursorPoint = cursor;
-  const bounds = overlayWindow?.getBounds() || currentZone().windowBounds;
+  const bounds = currentZone().windowBounds;
   const local = (rect) => ({ ...rect, x: rect.x - bounds.x, y: rect.y - bounds.y });
   const available = desktopSample.available && now - desktopSample.timestamp < 2200;
   const displays = currentDisplays();
@@ -858,7 +861,7 @@ function createOverlayWindow() {
       nodeIntegration: false,
       sandbox: true,
       autoplayPolicy: 'no-user-gesture-required',
-      backgroundThrottling: false,
+      backgroundThrottling: true,
     },
   });
 
@@ -1070,6 +1073,15 @@ function createTray() {
     if (!settings.overlayEnabled) void applySettingsPatch({ overlayEnabled: true });
     else showSettingsWindow();
   });
+  if (process.platform === 'win32') {
+    scaledTrayMenu = new ScaledTrayMenu({ BrowserWindow, ipcMain });
+    tray.on('right-click', () => {
+      const point = screen.getCursorScreenPoint();
+      const display = screen.getDisplayNearestPoint(point);
+      const scale = nativeDisplayScales.find(d => sameBounds(d, display.bounds))?.scaleFactor || display.scaleFactor;
+      scaledTrayMenu.open(point, display.workArea, scale);
+    });
+  }
   rebuildTrayMenu();
 }
 
@@ -1079,7 +1091,7 @@ function rebuildTrayMenu() {
   tray.setToolTip(settings.overlayEnabled
     ? 'Nova Fox Companion'
     : (french ? 'Nova Fox Companion — désactivés' : 'Nova Fox Companion — hidden'));
-  tray.setContextMenu(Menu.buildFromTemplate([
+  const template = [
     {
       label: french ? 'Ouvrir les réglages' : 'Open settings',
       click: showSettingsWindow,
@@ -1121,7 +1133,9 @@ function rebuildTrayMenu() {
         app.quit();
       },
     },
-  ]));
+  ];
+  if (scaledTrayMenu) scaledTrayMenu.setTemplate(template);
+  else tray.setContextMenu(Menu.buildFromTemplate(template));
 }
 
 function runDemo() {
@@ -1370,7 +1384,19 @@ function registerIpc() {
   });
   ipcMain.handle('nova:get-overlay-bootstrap', (event) => {
     requireWindowSender(event, overlayWindow, 'overlay');
-    return overlayBootstrapPayload();
+    const world = currentZone().windowBounds, bounds = overlayWindow.getBounds();
+    return { ...overlayBootstrapPayload(), surface: { x: bounds.x-world.x, y: bounds.y-world.y, width:bounds.width,height:bounds.height, world } };
+  });
+  ipcMain.handle('nova:overlay-surface', (event, value) => {
+    requireWindowSender(event, overlayWindow, 'overlay');
+    if (!value || !Array.isArray(value.rects) || value.rects.length > 256) throw new Error('Invalid overlay content bounds');
+    const world = currentZone().windowBounds, before = overlayWindow.getBounds();
+    if (!value.world || !sameBounds(value.world,world)) return {stale:true};
+    const desired = fitSurface(value.rects, world, { x: before.x-world.x, y: before.y-world.y, width: before.width, height: before.height }, value.full === true);
+    const next = { x: world.x+desired.x, y: world.y+desired.y, width: desired.width, height: desired.height };
+    if (!sameBounds(before,next)) overlayWindow.setBounds(next,false);
+    const actual = overlayWindow.getBounds();
+    return { x: actual.x-world.x, y: actual.y-world.y, width:actual.width,height:actual.height, world };
   });
   ipcMain.handle('nova:update-settings', (event, patch) => {
     requireWindowSender(event, settingsWindow, 'settings');
@@ -1613,6 +1639,10 @@ async function startApplication() {
   normalizeLaunchAtLogin(app, process.execPath);
   settingsStore = new SettingsStore(path.join(app.getPath('userData'), 'settings.json'));
   settings = await settingsStore.load();
+  registerFreshRestoreLink({ app, isNewProfile: settingsStore.isNewProfile,
+    normalLaunch: !profileArgument && !capturePath && !settingsCapturePath && !zonePickerCapturePath
+      && !process.argv.includes('--offline-smoke'),
+    executable: process.execPath, appPath: app.getAppPath() });
   companionKeys = new CompanionKeyStore(path.join(app.getPath('userData'), 'companion-key.json'), safeStorage);
   companionBrain = new CompanionBrain({ directory: app.getPath('userData'), keys: companionKeys,
     memory: new CompanionMemory(path.join(app.getPath('userData'), 'companion-memory.json'), safeStorage),
@@ -1761,6 +1791,7 @@ app.on('before-quit', () => {
   isQuitting = true;
 });
 app.on('will-quit', () => {
+  scaledTrayMenu?.dispose();
   desktopSensor?.stop();
   if (desktopTimer) clearInterval(desktopTimer);
   if (bridgeRetryTimer) clearInterval(bridgeRetryTimer);
